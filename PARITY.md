@@ -6,27 +6,28 @@ disagree, the original code wins; those spots are marked **(orig)**.
 
 ## Profit math
 
-- [ ] `gross = price + shippingCharged`
-- [ ] `net = payout - cost - shippingCost - otherCosts`
-- [ ] Payout entered: `fees = gross - payout`, exact; rate table ignored entirely
-- [ ] Payout null: fees from the platform rate, `payout = gross - fees`, marked estimated
-- [ ] A zero payout is a real payout, not a missing one
-- [ ] Payout above gross yields negative fees, flagged on the sale form
-- [ ] Fee base is price + shipping charged when the schedule `includesShipping`, else price alone **(orig)**
-- [ ] Fee is 0 (not the bare fixed fee) when the base is 0
-- [ ] Unknown platform falls back to the `other` schedule **(orig)**
-- [ ] Margin = net / gross (null when gross is 0); ROI = net / cost (null when cost is 0)
-- [ ] Totals: gross, payout, fees, costs, net, count, estimated count
-- [ ] Write-off total = sum of donated cost, count; never mixed into sale profit
-- [ ] Projected net at asking price on the first listed platform, price only; null with no list price
-- [ ] Every case above lives in `/shared/profit-cases.json`, passing in both C# and TS
+- [x] `gross = price + shippingCharged`
+- [x] `net = payout - cost - shippingCost - otherCosts`
+- [x] Payout entered: `fees = gross - payout`, exact; rate table ignored entirely
+- [x] Payout null: fees from the platform rate, `payout = gross - fees`, marked estimated
+- [x] A zero payout is a real payout, not a missing one
+- [x] Payout above gross yields negative fees
+- [x] Fee base is price + shipping charged when the schedule `includesShipping`, else price alone **(orig)**
+- [x] Fee is 0 (not the bare fixed fee) when the base is 0
+- [x] Unknown platform falls back to the `other` schedule **(orig)**
+- [x] Margin = net / gross (null when gross is 0); ROI = net / cost (null when cost is 0)
+- [x] Totals: gross, payout, fees, costs, net, count, estimated count
+- [x] Write-off total = sum of donated cost, count; never mixed into sale profit
+- [x] Projected net at asking price on the first listed platform, price only; null with no list price
+- [x] Estimated fees round to the cent with halves going up, in exact decimal/integer-cents math. The original rounded a few halfway prices a cent low through floating point (eBay $150: $20.27 instead of $20.28); the fixture pins the corrected values
+- [x] Every case above lives in `/shared/profit-cases.json`, passing in both C# and TS
 
 ## Platforms and fees
 
-- [ ] Registry: Depop 3.3% + $0.45, eBay 13.25% + $0.40, Vinted 0%, Other 0% **(orig: Other)**
-- [ ] Notes copied from `src/lib/platforms.js`
-- [ ] Per-user editable percent and fixed fee, seeded from defaults; missing platforms filled from defaults
-- [ ] Adding a platform = registry entry + `--<id>-color` token in both themes; filters, badges, charts, fee editor follow
+- [x] Registry: Depop 3.3% + $0.45, eBay 13.25% + $0.40, Vinted 0%, Other 0% **(orig: Other)**
+- [x] Notes copied from `src/lib/platforms.js`
+- [ ] Per-user editable percent, fixed fee and includes-shipping flag, seeded from defaults; missing platforms filled from defaults **(orig: includes shipping)**
+- [ ] Adding a platform = one entry in `shared/platforms.json` (read by server and client) + `--<id>-color` token in both themes; filters, badges, charts, fee editor follow
 
 ## Item lifecycle
 
@@ -55,6 +56,7 @@ disagree, the original code wins; those spots are marked **(orig)**.
 - [ ] `listedFor` snapshotted at sale time; `price` is the accepted offer
 - [ ] Live breakdown: markdown from asking, fees, cost of goods, shipping, net, margin, ROI, days held
 - [ ] Accepted offer required (> 0)
+- [ ] A payout above what the buyer paid is flagged as a likely typo
 - [ ] "est." label everywhere an estimated fee appears
 - [ ] Sales grouped by month with a running total
 
