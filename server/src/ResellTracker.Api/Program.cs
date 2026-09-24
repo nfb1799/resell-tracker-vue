@@ -71,6 +71,7 @@ builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<SettingsService>();
 builder.Services.AddScoped<ItemService>();
 builder.Services.AddScoped<DemoService>();
+builder.Services.AddScoped<StatsService>();
 if (builder.Configuration.GetValue("Demo:CleanupEnabled", true))
 {
     builder.Services.AddHostedService<DemoCleanupService>();
