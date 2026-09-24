@@ -1,0 +1,3 @@
+# Test names read as sentences: Health_returns_ok, Payout_of_zero_is_not_missing.
+[*.cs]
+dotnet_diagnostic.CA1707.severity = none
