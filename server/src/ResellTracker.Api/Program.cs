@@ -16,12 +16,37 @@ builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 builder.Services.AddDbContext<AppDbContext>(o =>
     o.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-// Identity's user store and cookie scheme. Sign-in endpoints arrive in Phase 3;
-// until then [Authorize] endpoints simply answer 401.
-builder.Services.AddIdentityCore<AppUser>().AddEntityFrameworkStores<AppDbContext>();
+builder.Services
+    .AddIdentityCore<AppUser>(o =>
+    {
+        // The original app's rule: 6 characters, nothing else forced.
+        o.Password.RequiredLength = 6;
+        o.Password.RequireDigit = false;
+        o.Password.RequireLowercase = false;
+        o.Password.RequireUppercase = false;
+        o.Password.RequireNonAlphanumeric = false;
+        o.Password.RequiredUniqueChars = 1;
+        o.User.RequireUniqueEmail = true;
+        o.Lockout.MaxFailedAccessAttempts = 5;
+        o.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    })
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddSignInManager()
+    .AddDefaultTokenProviders();
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
 builder.Services.ConfigureApplicationCookie(o =>
 {
+    o.Cookie.Name = "rt_session";
+    o.Cookie.HttpOnly = true;
+    // Local development runs on plain http://localhost; everywhere else, tests
+    // included, the cookie is only ever sent over HTTPS.
+    o.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+    // Strict keeps the cookie off every cross-site request, which is the CSRF defence:
+    // the SPA is same-origin, so it never needs the cookie on one.
+    o.Cookie.SameSite = SameSiteMode.Strict;
+    o.ExpireTimeSpan = TimeSpan.FromDays(14);
+    o.SlidingExpiration = true;
+
     // An API answers 401/403; it doesn't redirect to a login page.
     o.Events.OnRedirectToLogin = context =>
     {
@@ -34,13 +59,22 @@ builder.Services.ConfigureApplicationCookie(o =>
         return Task.CompletedTask;
     };
 });
+// A deleted account (an expired demo) or a changed password stops a session within minutes.
+builder.Services.Configure<SecurityStampValidatorOptions>(o => o.ValidationInterval = TimeSpan.FromMinutes(5));
 builder.Services.AddAuthorization();
+builder.Services.AddAppRateLimits(builder.Configuration);
+builder.Services.AddTransient<IEmailSender<AppUser>, LoggingEmailSender>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<SettingsService>();
 builder.Services.AddScoped<ItemService>();
+builder.Services.AddScoped<DemoService>();
+if (builder.Configuration.GetValue("Demo:CleanupEnabled", true))
+{
+    builder.Services.AddHostedService<DemoCleanupService>();
+}
 
 var app = builder.Build();
 
@@ -60,6 +94,7 @@ app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapControllers();
 
