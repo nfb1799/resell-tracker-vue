@@ -15,9 +15,10 @@ progress; see [PARITY.md](PARITY.md) for what has been carried over so far.
 
 ## Running locally
 
-Requires Node 24, the .NET 10 SDK and a SQL Server. On Windows the default is
-**SQL Server LocalDB** (`(localdb)\MSSQLLocalDB`), which starts on demand and
-needs no Docker. Elsewhere, or if you prefer a container:
+Requires Node 24, the .NET 10 SDK and SQL Server 2019 or later. On Windows the
+default connection string points at a local **SQL Server Express** instance
+(`.\SQLEXPRESS`, Windows auth), so no Docker is needed; LocalDB works too.
+Elsewhere, or if you prefer a container:
 
 ```bash
 cp .env.example .env          # then set a SQL Server password
