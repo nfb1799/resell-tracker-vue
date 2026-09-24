@@ -10,10 +10,13 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // Files both halves of the app use: the platform registry and the profit fixture.
+      '@shared': fileURLToPath(new URL('../shared', import.meta.url)),
     },
   },
   server: {
     port: 5175,
+    fs: { allow: ['.', '../shared'] },
     // In development the API runs separately; proxying keeps requests (and
     // cookies) same-origin, matching production where ASP.NET Core serves the SPA.
     proxy: {
