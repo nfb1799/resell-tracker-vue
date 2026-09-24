@@ -6,7 +6,13 @@ namespace ResellTracker.Api.Data;
 // Persistence shapes only. They never leave the API: controllers return DTOs
 // (see Contracts), and the rules live in ResellTracker.Domain.
 
-public class AppUser : IdentityUser<Guid>;
+public class AppUser : IdentityUser<Guid>
+{
+    /// <summary>A throwaway account made by "Try the demo"; deleted once it expires.</summary>
+    public bool IsDemo { get; set; }
+
+    public DateTimeOffset? DemoExpiresAt { get; set; }
+}
 
 public class Item
 {

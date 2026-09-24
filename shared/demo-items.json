@@ -1,0 +1,248 @@
+{
+  "$comment": "Sample inventory every Try-the-demo visitor gets a private copy of, taken from the original app demo. Dates are days before today, so the demo never goes stale. Status is not stored: a sale makes it sold, a donation donated, otherwise its platforms decide listed or in stock.",
+  "settings": {
+    "displayName": "Demo",
+    "currency": "USD",
+    "theme": "dark",
+    "profitGoal": 400
+  },
+  "items": [
+    {
+      "title": "Carhartt Detroit jacket",
+      "brand": "Carhartt",
+      "category": "Outerwear",
+      "size": "L",
+      "cost": 22,
+      "source": "Goodwill on Jefferson",
+      "platforms": [
+        "depop"
+      ],
+      "listPrice": 140,
+      "createdDaysAgo": 120,
+      "acquiredDaysAgo": 120,
+      "listedDaysAgo": 110,
+      "sale": {
+        "platform": "depop",
+        "listedFor": 140,
+        "price": 138,
+        "shippingCharged": 12,
+        "payout": 144.6,
+        "shippingCost": 11.4,
+        "otherCosts": 1,
+        "daysAgo": 96
+      }
+    },
+    {
+      "title": "Nike Air Max 90 infrared",
+      "brand": "Nike",
+      "category": "Shoes",
+      "size": "10.5",
+      "cost": 45,
+      "source": "Estate sale",
+      "platforms": [
+        "ebay"
+      ],
+      "listPrice": 190,
+      "createdDaysAgo": 80,
+      "acquiredDaysAgo": 80,
+      "listedDaysAgo": 74,
+      "sale": {
+        "platform": "ebay",
+        "listedFor": 190,
+        "price": 175,
+        "shippingCharged": 0,
+        "payout": 151.41,
+        "shippingCost": 14.2,
+        "otherCosts": 0,
+        "daysAgo": 58
+      }
+    },
+    {
+      "title": "Ralph Lauren rugby polo",
+      "brand": "Ralph Lauren",
+      "category": "Tops",
+      "size": "M",
+      "cost": 6,
+      "source": "Bins",
+      "platforms": [
+        "vinted"
+      ],
+      "listPrice": 48,
+      "createdDaysAgo": 66,
+      "acquiredDaysAgo": 66,
+      "listedDaysAgo": 60,
+      "sale": {
+        "platform": "vinted",
+        "listedFor": 48,
+        "price": 42,
+        "shippingCharged": 0,
+        "payout": 42,
+        "shippingCost": 0,
+        "otherCosts": 0.8,
+        "daysAgo": 31
+      }
+    },
+    {
+      "title": "Levi 501 dark wash",
+      "brand": "Levi's",
+      "category": "Denim",
+      "size": "32x32",
+      "cost": 12,
+      "source": "Goodwill on Jefferson",
+      "platforms": [
+        "depop"
+      ],
+      "listPrice": 62,
+      "createdDaysAgo": 40,
+      "acquiredDaysAgo": 40,
+      "listedDaysAgo": 36,
+      "sale": {
+        "platform": "depop",
+        "listedFor": 62,
+        "price": 55,
+        "shippingCharged": 8,
+        "payout": 60.4,
+        "shippingCost": 7.9,
+        "otherCosts": 0,
+        "daysAgo": 9
+      }
+    },
+    {
+      "title": "Patagonia Synchilla fleece",
+      "brand": "Patagonia",
+      "category": "Outerwear",
+      "size": "M",
+      "cost": 18,
+      "source": "Bins",
+      "platforms": [
+        "ebay"
+      ],
+      "listPrice": 95,
+      "createdDaysAgo": 30,
+      "acquiredDaysAgo": 30,
+      "listedDaysAgo": 26,
+      "sale": {
+        "platform": "ebay",
+        "listedFor": 95,
+        "price": 88,
+        "shippingCharged": 9,
+        "payout": 83.75,
+        "shippingCost": 9.6,
+        "otherCosts": 0,
+        "daysAgo": 4
+      }
+    },
+    {
+      "title": "Stussy 8-ball hoodie",
+      "brand": "Stussy",
+      "category": "Tops",
+      "size": "L",
+      "cost": 20,
+      "source": "Bins",
+      "platforms": [
+        "ebay"
+      ],
+      "listPrice": 120,
+      "createdDaysAgo": 28,
+      "acquiredDaysAgo": 28,
+      "listedDaysAgo": 24,
+      "sale": {
+        "platform": "ebay",
+        "listedFor": 120,
+        "price": 115,
+        "shippingCharged": 0,
+        "payout": null,
+        "shippingCost": 9.2,
+        "otherCosts": 0,
+        "daysAgo": 2
+      }
+    },
+    {
+      "title": "Vintage Harley Davidson tee",
+      "brand": "Harley Davidson",
+      "category": "Tops",
+      "size": "XL",
+      "cost": 8,
+      "platforms": [
+        "depop",
+        "ebay"
+      ],
+      "listPrice": 78,
+      "createdDaysAgo": 75,
+      "acquiredDaysAgo": 75,
+      "listedDaysAgo": 70
+    },
+    {
+      "title": "The North Face Nuptse 700",
+      "brand": "The North Face",
+      "category": "Outerwear",
+      "size": "L",
+      "cost": 55,
+      "platforms": [
+        "ebay"
+      ],
+      "listPrice": 210,
+      "createdDaysAgo": 52,
+      "acquiredDaysAgo": 52,
+      "listedDaysAgo": 50
+    },
+    {
+      "title": "Doc Martens 1460 black",
+      "brand": "Dr. Martens",
+      "category": "Shoes",
+      "size": "9",
+      "cost": 30,
+      "platforms": [
+        "depop"
+      ],
+      "listPrice": 110,
+      "createdDaysAgo": 20,
+      "acquiredDaysAgo": 20,
+      "listedDaysAgo": 18
+    },
+    {
+      "title": "Old Navy cargo shorts",
+      "brand": "Old Navy",
+      "category": "Bottoms",
+      "size": "34",
+      "cost": 5,
+      "source": "Bins",
+      "platforms": [
+        "depop"
+      ],
+      "listPrice": 18,
+      "createdDaysAgo": 190,
+      "acquiredDaysAgo": 190,
+      "listedDaysAgo": 185,
+      "donation": {
+        "org": "Goodwill on Jefferson",
+        "receiptValue": 8,
+        "daysAgo": 12
+      }
+    },
+    {
+      "title": "Uniqlo linen shirt",
+      "brand": "Uniqlo",
+      "category": "Tops",
+      "size": "S",
+      "cost": 4,
+      "platforms": [],
+      "listPrice": null,
+      "createdDaysAgo": 6,
+      "acquiredDaysAgo": 6,
+      "listedDaysAgo": null
+    },
+    {
+      "title": "Adidas Sambas OG",
+      "brand": "Adidas",
+      "category": "Shoes",
+      "size": "8.5",
+      "cost": 26,
+      "platforms": [],
+      "listPrice": null,
+      "createdDaysAgo": 3,
+      "acquiredDaysAgo": 3,
+      "listedDaysAgo": null
+    }
+  ]
+}

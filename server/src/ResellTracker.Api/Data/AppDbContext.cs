@@ -67,6 +67,13 @@ internal sealed class ItemConfiguration : IEntityTypeConfiguration<Item>
         s => Enum.Parse<ItemStatus>(s, true));
 }
 
+internal sealed class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
+{
+    // The cleanup job looks for expired demo accounts; only those rows are indexed.
+    public void Configure(EntityTypeBuilder<AppUser> user) =>
+        user.HasIndex(u => u.DemoExpiresAt).HasFilter("[IsDemo] = 1");
+}
+
 internal sealed class ItemPlatformConfiguration : IEntityTypeConfiguration<ItemPlatform>
 {
     public void Configure(EntityTypeBuilder<ItemPlatform> platform)

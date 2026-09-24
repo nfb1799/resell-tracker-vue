@@ -7,6 +7,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The sample inventory every demo account is seeded with; see shared/README.md. -->
+    <EmbeddedResource Include="..\..\..\shared\demo-items.json" LogicalName="ResellTracker.Api.demo-items.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ResellTracker.Domain\ResellTracker.Domain.csproj" />
   </ItemGroup>
 
