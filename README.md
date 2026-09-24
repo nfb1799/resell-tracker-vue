@@ -41,8 +41,21 @@ dotnet ef migrations add <Name> --project src/ResellTracker.Api --output-dir Dat
 
 ## API
 
-Every endpoint needs a signed-in user and only ever sees that user's data. Errors
-are [ProblemDetails](https://www.rfc-editor.org/rfc/rfc9457).
+Accounts are ASP.NET Core Identity with a session cookie that is HttpOnly, Secure
+and SameSite=Strict. The SPA is served from the same origin, so the cookie is
+first-party and never readable from script, and Strict keeps it off every
+cross-site request. Sign-in, sign-up, password reset and demo creation are rate
+limited per client, and five wrong passwords lock an account for five minutes.
+
+| Endpoint | |
+|---|---|
+| `POST /api/auth/register` `login` `logout` | Email and password (6+ characters, as in the original) |
+| `GET /api/auth/me` | Who is signed in; a demo account says when it expires |
+| `POST /api/auth/demo` | A private demo account seeded from `shared/demo-items.json`, deleted after 24 hours |
+| `POST /api/auth/forgot-password` `reset-password` | Emailed reset link. Until an email provider is chosen, the link is written to the log |
+
+Everything else needs a signed-in user and only ever sees that user's data.
+Errors are [ProblemDetails](https://www.rfc-editor.org/rfc/rfc9457).
 
 | Endpoint | |
 |---|---|

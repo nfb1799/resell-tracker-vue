@@ -113,9 +113,11 @@ disagree, the original code wins; those spots are marked **(orig)**.
 
 ## Auth, offline, demo
 
-- [ ] Email/password sign up, sign in, sign out
-- [ ] Every query scoped to the signed-in owner; cross-user isolation test
+- [ ] Email/password sign up (name defaults to the start of the email), sign in, sign out; API done, screens in Phase 4
+- [ ] Password reset by emailed link **(orig)**; API done with the link logged, real email provider with hosting (Phase 7)
+- [ ] 6-character minimum password **(orig)**, and the original's error wording
+- [x] Every query scoped to the signed-in owner; cross-user isolation test
 - [ ] Installable PWA
 - [ ] Reads work offline from cache; writes queue and sync on reconnect
 - [ ] Offline indicator
-- [ ] "Try the demo" from the sign-in page, seeded, resettable (replaces the original's guest sign-in)
+- [ ] "Try the demo" from the sign-in page (replaces the original's guest sign-in): a private seeded copy per visitor, deleted after 24 hours; API done, button in Phase 4
