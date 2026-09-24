@@ -1,0 +1,721 @@
+{
+  "$comment": "Profit-math cases shared by the C# domain tests and the client Vitest suite. Money is in dollars with at most 2 decimals; fee schedules not overridden come from platforms.json. margin and roi are ratios, compared to within 1e-9. Generated once from an exact integer-cents oracle and cross-checked against the original app; edit by hand from here on.",
+  "estimateFees": [
+    {
+      "name": "eBay charges on price plus shipping",
+      "sale": {
+        "platform": "ebay",
+        "price": 40,
+        "shippingCharged": 5
+      },
+      "expected": 6.36
+    },
+    {
+      "name": "Depop charges payment processing on the whole order",
+      "sale": {
+        "platform": "depop",
+        "price": 30,
+        "shippingCharged": 4
+      },
+      "expected": 1.57
+    },
+    {
+      "name": "Vinted charges nothing",
+      "sale": {
+        "platform": "vinted",
+        "price": 30,
+        "shippingCharged": 4
+      },
+      "expected": 0
+    },
+    {
+      "name": "an empty sale costs nothing, not a bare fixed fee",
+      "sale": {
+        "platform": "ebay",
+        "price": 0,
+        "shippingCharged": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "an unknown platform falls back to the \"other\" schedule",
+      "sale": {
+        "platform": "grailed",
+        "price": 50,
+        "shippingCharged": 0
+      },
+      "expected": 0
+    },
+    {
+      "name": "halfway: eBay $10 is 1.325 + 0.40, rounds up to 1.73",
+      "sale": {
+        "platform": "ebay",
+        "price": 10,
+        "shippingCharged": 0
+      },
+      "expected": 1.73
+    },
+    {
+      "name": "halfway: Depop $15 is 0.495 + 0.45, rounds up to 0.95",
+      "sale": {
+        "platform": "depop",
+        "price": 15,
+        "shippingCharged": 0
+      },
+      "expected": 0.95
+    },
+    {
+      "name": "halfway: eBay $2 + $2 shipping is 0.53 + 0.40",
+      "sale": {
+        "platform": "ebay",
+        "price": 2,
+        "shippingCharged": 2
+      },
+      "expected": 0.93
+    },
+    {
+      "name": "just under halfway rounds down: Depop $12.35 is 0.40755 + 0.45",
+      "sale": {
+        "platform": "depop",
+        "price": 12.35,
+        "shippingCharged": 0
+      },
+      "expected": 0.86
+    },
+    {
+      "name": "halfway where the original app got it a cent low (float): eBay $150 is 19.875 + 0.40, rounds up to 20.28",
+      "sale": {
+        "platform": "ebay",
+        "price": 150,
+        "shippingCharged": 0
+      },
+      "expected": 20.28
+    },
+    {
+      "name": "halfway where the original app got it a cent low (float): Depop $485 is 16.005 + 0.45, rounds up to 16.46",
+      "sale": {
+        "platform": "depop",
+        "price": 485,
+        "shippingCharged": 0
+      },
+      "expected": 16.46
+    },
+    {
+      "name": "a schedule without shipping charges on price alone",
+      "feeOverrides": {
+        "ebay": {
+          "percent": 10,
+          "fixed": 0,
+          "includesShipping": false
+        }
+      },
+      "sale": {
+        "platform": "ebay",
+        "price": 40,
+        "shippingCharged": 5
+      },
+      "expected": 4
+    }
+  ],
+  "computeProfit": [
+    {
+      "name": "payout entered: fees derived from what the buyer paid and what you were paid",
+      "item": {
+        "cost": 8,
+        "sale": {
+          "platform": "ebay",
+          "price": 40,
+          "shippingCharged": 5,
+          "payout": 38.64,
+          "shippingCost": 4.5,
+          "otherCosts": 0.5
+        }
+      },
+      "expected": {
+        "gross": 45,
+        "payout": 38.64,
+        "fees": 6.36,
+        "cogs": 8,
+        "shippingCost": 4.5,
+        "otherCosts": 0.5,
+        "costs": 13,
+        "net": 25.64,
+        "margin": 0.5697777777777778,
+        "roi": 3.205,
+        "feesEstimated": false
+      }
+    },
+    {
+      "name": "payout entered: the rate table is ignored, even a wildly wrong one",
+      "feeOverrides": {
+        "ebay": {
+          "percent": 90,
+          "fixed": 10,
+          "includesShipping": true
+        }
+      },
+      "item": {
+        "cost": 8,
+        "sale": {
+          "platform": "ebay",
+          "price": 40,
+          "shippingCharged": 5,
+          "payout": 38.64,
+          "shippingCost": 4.5,
+          "otherCosts": 0.5
+        }
+      },
+      "expected": {
+        "gross": 45,
+        "payout": 38.64,
+        "fees": 6.36,
+        "cogs": 8,
+        "shippingCost": 4.5,
+        "otherCosts": 0.5,
+        "costs": 13,
+        "net": 25.64,
+        "margin": 0.5697777777777778,
+        "roi": 3.205,
+        "feesEstimated": false
+      }
+    },
+    {
+      "name": "a zero payout is a real number, not a missing one",
+      "item": {
+        "cost": 8,
+        "sale": {
+          "platform": "ebay",
+          "price": 40,
+          "shippingCharged": 5,
+          "payout": 0,
+          "shippingCost": 4.5,
+          "otherCosts": 0.5
+        }
+      },
+      "expected": {
+        "gross": 45,
+        "payout": 0,
+        "fees": 45,
+        "cogs": 8,
+        "shippingCost": 4.5,
+        "otherCosts": 0.5,
+        "costs": 13,
+        "net": -13,
+        "margin": -0.28888888888888886,
+        "roi": -1.625,
+        "feesEstimated": false
+      }
+    },
+    {
+      "name": "a payout above what the buyer paid gives a negative platform cut",
+      "item": {
+        "cost": 8,
+        "sale": {
+          "platform": "ebay",
+          "price": 40,
+          "shippingCharged": 5,
+          "payout": 50,
+          "shippingCost": 4.5,
+          "otherCosts": 0.5
+        }
+      },
+      "expected": {
+        "gross": 45,
+        "payout": 50,
+        "fees": -5,
+        "cogs": 8,
+        "shippingCost": 4.5,
+        "otherCosts": 0.5,
+        "costs": 13,
+        "net": 37,
+        "margin": 0.8222222222222222,
+        "roi": 4.625,
+        "feesEstimated": false
+      }
+    },
+    {
+      "name": "no payout: fees come from the rate table",
+      "item": {
+        "cost": 8,
+        "sale": {
+          "platform": "ebay",
+          "price": 40,
+          "shippingCharged": 5,
+          "payout": null,
+          "shippingCost": 4.5,
+          "otherCosts": 0.5
+        }
+      },
+      "expected": {
+        "gross": 45,
+        "payout": 38.64,
+        "fees": 6.36,
+        "cogs": 8,
+        "shippingCost": 4.5,
+        "otherCosts": 0.5,
+        "costs": 13,
+        "net": 25.64,
+        "margin": 0.5697777777777778,
+        "roi": 3.205,
+        "feesEstimated": true
+      }
+    },
+    {
+      "name": "no payout: follows an edited rate table",
+      "feeOverrides": {
+        "ebay": {
+          "percent": 10,
+          "fixed": 0,
+          "includesShipping": true
+        }
+      },
+      "item": {
+        "cost": 8,
+        "sale": {
+          "platform": "ebay",
+          "price": 40,
+          "shippingCharged": 5,
+          "payout": null,
+          "shippingCost": 4.5,
+          "otherCosts": 0.5
+        }
+      },
+      "expected": {
+        "gross": 45,
+        "payout": 40.5,
+        "fees": 4.5,
+        "cogs": 8,
+        "shippingCost": 4.5,
+        "otherCosts": 0.5,
+        "costs": 13,
+        "net": 27.5,
+        "margin": 0.6111111111111112,
+        "roi": 3.4375,
+        "feesEstimated": true
+      }
+    },
+    {
+      "name": "no payout: a halfway estimate rounds up",
+      "item": {
+        "cost": 3,
+        "sale": {
+          "platform": "ebay",
+          "price": 10,
+          "shippingCharged": 0,
+          "payout": null,
+          "shippingCost": 0,
+          "otherCosts": 0
+        }
+      },
+      "expected": {
+        "gross": 10,
+        "payout": 8.27,
+        "fees": 1.73,
+        "cogs": 3,
+        "shippingCost": 0,
+        "otherCosts": 0,
+        "costs": 3,
+        "net": 5.27,
+        "margin": 0.527,
+        "roi": 1.7566666666666666,
+        "feesEstimated": true
+      }
+    },
+    {
+      "name": "no payout: an estimate the original app rounded a cent low",
+      "item": {
+        "cost": 60,
+        "sale": {
+          "platform": "ebay",
+          "price": 150,
+          "shippingCharged": 0,
+          "payout": null,
+          "shippingCost": 9.5,
+          "otherCosts": 0
+        }
+      },
+      "expected": {
+        "gross": 150,
+        "payout": 129.72,
+        "fees": 20.28,
+        "cogs": 60,
+        "shippingCost": 9.5,
+        "otherCosts": 0,
+        "costs": 69.5,
+        "net": 60.22,
+        "margin": 0.4014666666666667,
+        "roi": 1.0036666666666667,
+        "feesEstimated": true
+      }
+    },
+    {
+      "name": "ROI is null for a free item",
+      "item": {
+        "cost": 0,
+        "sale": {
+          "platform": "ebay",
+          "price": 40,
+          "shippingCharged": 5,
+          "payout": 38.64,
+          "shippingCost": 4.5,
+          "otherCosts": 0.5
+        }
+      },
+      "expected": {
+        "gross": 45,
+        "payout": 38.64,
+        "fees": 6.36,
+        "cogs": 0,
+        "shippingCost": 4.5,
+        "otherCosts": 0.5,
+        "costs": 5,
+        "net": 33.64,
+        "margin": 0.7475555555555555,
+        "roi": null,
+        "feesEstimated": false
+      }
+    },
+    {
+      "name": "margin is null with no revenue at all",
+      "item": {
+        "cost": 5,
+        "sale": {
+          "platform": "other",
+          "price": 0,
+          "shippingCharged": 0,
+          "payout": null,
+          "shippingCost": 0,
+          "otherCosts": 0
+        }
+      },
+      "expected": {
+        "gross": 0,
+        "payout": 0,
+        "fees": 0,
+        "cogs": 5,
+        "shippingCost": 0,
+        "otherCosts": 0,
+        "costs": 5,
+        "net": -5,
+        "margin": null,
+        "roi": -1,
+        "feesEstimated": true
+      }
+    },
+    {
+      "name": "a loss",
+      "item": {
+        "cost": 50,
+        "sale": {
+          "platform": "vinted",
+          "price": 20,
+          "shippingCharged": 0,
+          "payout": 20,
+          "shippingCost": 0,
+          "otherCosts": 0
+        }
+      },
+      "expected": {
+        "gross": 20,
+        "payout": 20,
+        "fees": 0,
+        "cogs": 50,
+        "shippingCost": 0,
+        "otherCosts": 0,
+        "costs": 50,
+        "net": -30,
+        "margin": -1.5,
+        "roi": -0.6,
+        "feesEstimated": false
+      }
+    },
+    {
+      "name": "blank optional costs count as zero",
+      "item": {
+        "cost": 8,
+        "sale": {
+          "platform": "ebay",
+          "price": 40,
+          "shippingCharged": 5,
+          "payout": 38.64,
+          "shippingCost": 0,
+          "otherCosts": 0
+        }
+      },
+      "expected": {
+        "gross": 45,
+        "payout": 38.64,
+        "fees": 6.36,
+        "cogs": 8,
+        "shippingCost": 0,
+        "otherCosts": 0,
+        "costs": 8,
+        "net": 30.64,
+        "margin": 0.6808888888888889,
+        "roi": 3.83,
+        "feesEstimated": false
+      }
+    },
+    {
+      "name": "an item with no sale attached",
+      "item": {
+        "cost": 12,
+        "sale": null
+      },
+      "expected": {
+        "gross": 0,
+        "payout": 0,
+        "fees": 0,
+        "cogs": 12,
+        "shippingCost": 0,
+        "otherCosts": 0,
+        "costs": 12,
+        "net": -12,
+        "margin": null,
+        "roi": -1,
+        "feesEstimated": true
+      }
+    }
+  ],
+  "totalProfit": [
+    {
+      "name": "sums a mixed batch of sales",
+      "items": [
+        {
+          "cost": 8,
+          "sale": {
+            "platform": "vinted",
+            "price": 30,
+            "shippingCharged": 0,
+            "payout": 30,
+            "shippingCost": 0,
+            "otherCosts": 0
+          }
+        },
+        {
+          "cost": 10,
+          "sale": {
+            "platform": "vinted",
+            "price": 5,
+            "shippingCharged": 0,
+            "payout": 5,
+            "shippingCost": 0,
+            "otherCosts": 0
+          }
+        }
+      ],
+      "expected": {
+        "gross": 35,
+        "payout": 35,
+        "fees": 0,
+        "costs": 18,
+        "net": 17,
+        "count": 2,
+        "estimated": 0
+      }
+    },
+    {
+      "name": "counts rows leaning on an estimate",
+      "items": [
+        {
+          "cost": 8,
+          "sale": {
+            "platform": "ebay",
+            "price": 40,
+            "shippingCharged": 5,
+            "payout": 38.64,
+            "shippingCost": 4.5,
+            "otherCosts": 0.5
+          }
+        },
+        {
+          "cost": 1,
+          "sale": {
+            "platform": "ebay",
+            "price": 10,
+            "shippingCharged": 0,
+            "payout": null,
+            "shippingCost": 0,
+            "otherCosts": 0
+          }
+        }
+      ],
+      "expected": {
+        "gross": 55,
+        "payout": 46.91,
+        "fees": 8.09,
+        "costs": 14,
+        "net": 32.91,
+        "count": 2,
+        "estimated": 1
+      }
+    },
+    {
+      "name": "zeros for an empty list",
+      "items": [],
+      "expected": {
+        "gross": 0,
+        "payout": 0,
+        "fees": 0,
+        "costs": 0,
+        "net": 0,
+        "count": 0,
+        "estimated": 0
+      }
+    }
+  ],
+  "writeOffTotal": [
+    {
+      "name": "adds up what donated stock cost",
+      "items": [
+        {
+          "cost": 5
+        },
+        {
+          "cost": 12.5
+        },
+        {
+          "cost": 0
+        }
+      ],
+      "expected": {
+        "cost": 17.5,
+        "count": 3
+      }
+    },
+    {
+      "name": "the write-off is what you paid, not the asking price",
+      "items": [
+        {
+          "cost": 5,
+          "listPrice": 40
+        }
+      ],
+      "expected": {
+        "cost": 5,
+        "count": 1
+      }
+    },
+    {
+      "name": "zeros when nothing has been donated",
+      "items": [],
+      "expected": {
+        "cost": 0,
+        "count": 0
+      }
+    }
+  ],
+  "projectedNet": [
+    {
+      "name": "take-home at asking on the first platform listed",
+      "item": {
+        "listPrice": 40,
+        "cost": 8,
+        "platforms": [
+          "ebay"
+        ]
+      },
+      "expected": 26.3
+    },
+    {
+      "name": "null with no asking price yet",
+      "item": {
+        "listPrice": null,
+        "cost": 8,
+        "platforms": [
+          "ebay"
+        ]
+      },
+      "expected": null
+    },
+    {
+      "name": "uses the fallback schedule with no platform",
+      "item": {
+        "listPrice": 25,
+        "cost": 5,
+        "platforms": []
+      },
+      "expected": 20
+    },
+    {
+      "name": "first platform wins when listed on several",
+      "item": {
+        "listPrice": 30,
+        "cost": 10,
+        "platforms": [
+          "depop",
+          "ebay"
+        ]
+      },
+      "expected": 18.56
+    }
+  ],
+  "daysListed": [
+    {
+      "name": "listed to today",
+      "item": {
+        "status": "listed",
+        "acquiredDate": "2026-08-01",
+        "listedDate": "2026-08-10",
+        "saleDate": null
+      },
+      "today": "2026-09-24",
+      "expected": 45
+    },
+    {
+      "name": "listed to sold",
+      "item": {
+        "status": "sold",
+        "acquiredDate": "2026-08-01",
+        "listedDate": "2026-08-10",
+        "saleDate": "2026-08-31"
+      },
+      "today": "2026-09-24",
+      "expected": 21
+    },
+    {
+      "name": "never listed: counts from acquired",
+      "item": {
+        "status": "inventory",
+        "acquiredDate": "2026-09-01",
+        "listedDate": null,
+        "saleDate": null
+      },
+      "today": "2026-09-24",
+      "expected": 23
+    },
+    {
+      "name": "across a daylight-saving change",
+      "item": {
+        "status": "listed",
+        "acquiredDate": "2026-03-01",
+        "listedDate": "2026-03-01",
+        "saleDate": null
+      },
+      "today": "2026-03-15",
+      "expected": 14
+    },
+    {
+      "name": "never negative",
+      "item": {
+        "status": "sold",
+        "acquiredDate": "2026-09-10",
+        "listedDate": "2026-09-10",
+        "saleDate": "2026-09-01"
+      },
+      "today": "2026-09-24",
+      "expected": 0
+    },
+    {
+      "name": "no dates at all",
+      "item": {
+        "status": "inventory",
+        "acquiredDate": null,
+        "listedDate": null,
+        "saleDate": null
+      },
+      "today": "2026-09-24",
+      "expected": null
+    }
+  ]
+}

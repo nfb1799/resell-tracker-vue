@@ -1,5 +1,14 @@
 # shared
 
-Files both halves of the app test against. `profit-cases.json` (Phase 1) holds
-profit-math inputs and expected outputs; the C# domain tests and the TypeScript
-mirror's Vitest suite both run every case, so the two implementations cannot drift.
+Files both halves of the app read, so there is one copy of each.
+
+| File | Read by |
+|---|---|
+| `platforms.json` | The platform registry and default fee schedules. Embedded in the C# domain assembly and imported by the client as `@shared/platforms.json`. Adding a platform is one entry here plus a `--<id>-color` token in both themes. |
+| `profit-cases.json` | Profit-math inputs and expected outputs. The C# domain tests and the client's Vitest suite both run every case, so the two implementations cannot drift. |
+
+The fixture's expected values were generated once from an exact integer-cents
+oracle and cross-checked against the original app's `money.js`. Three cases
+differ from the original on purpose: halfway fee estimates the original's
+floating point rounded a cent low. Edit it by hand from here on; any change has
+to pass on both sides.

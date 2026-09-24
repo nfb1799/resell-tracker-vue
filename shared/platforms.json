@@ -1,0 +1,30 @@
+{
+  "$comment": "The one platform registry. The C# domain embeds this file and the client imports it, so adding a platform here (plus a --<id>-color token in both themes) is the whole change. A fee schedule is fee = base * percent / 100 + fixed, where base is the price alone, or price + shipping charged when includesShipping. These are only estimates: a sale with its real payout derives the fee from that instead. Order matters: it is the order platforms appear in filters, charts and the fee editor.",
+  "fallback": "other",
+  "platforms": [
+    {
+      "id": "depop",
+      "label": "Depop",
+      "note": "US: the 10% selling fee was dropped in 2024 (buyers pay it instead); what's left for the seller is payment processing on the whole order.",
+      "defaultFees": { "percent": 3.3, "fixed": 0.45, "includesShipping": true }
+    },
+    {
+      "id": "ebay",
+      "label": "eBay",
+      "note": "Final value fee for most categories, plus the per-order fixed fee.",
+      "defaultFees": { "percent": 13.25, "fixed": 0.40, "includesShipping": true }
+    },
+    {
+      "id": "vinted",
+      "label": "Vinted",
+      "note": "No seller fees — the buyer pays Buyer Protection on top.",
+      "defaultFees": { "percent": 0, "fixed": 0, "includesShipping": false }
+    },
+    {
+      "id": "other",
+      "label": "Other",
+      "note": "",
+      "defaultFees": { "percent": 0, "fixed": 0, "includesShipping": false }
+    }
+  ]
+}
