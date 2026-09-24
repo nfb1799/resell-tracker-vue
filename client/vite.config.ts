@@ -15,7 +15,7 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5175,
+    port: 5176,
     fs: { allow: ['.', '../shared'] },
     // In development the API runs separately; proxying keeps requests (and
     // cookies) same-origin, matching production where ASP.NET Core serves the SPA.
