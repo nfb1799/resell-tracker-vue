@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 namespace ResellTracker.Domain;
 
 /// <summary>
@@ -20,7 +18,7 @@ public static class Platforms
 {
     private sealed record RegistryFile(string Fallback, List<Platform> Platforms);
 
-    private static readonly RegistryFile Registry = Load();
+    private static readonly RegistryFile Registry = SharedResource.Load<RegistryFile>("platforms.json");
 
     /// <summary>Every platform, in display order.</summary>
     public static IReadOnlyList<Platform> All { get; } = Registry.Platforms.AsReadOnly();
@@ -31,14 +29,6 @@ public static class Platforms
     public static bool IsKnown(string? id) => Find(id) is not null;
 
     public static Platform? Find(string? id) => All.FirstOrDefault(p => p.Id == id);
-
-    private static RegistryFile Load()
-    {
-        using var stream = typeof(Platforms).Assembly.GetManifestResourceStream("ResellTracker.Domain.platforms.json")
-            ?? throw new InvalidOperationException("platforms.json is not embedded in the domain assembly.");
-        return JsonSerializer.Deserialize<RegistryFile>(stream, JsonSerializerOptions.Web)
-            ?? throw new InvalidOperationException("platforms.json is empty.");
-    }
 }
 
 /// <summary>

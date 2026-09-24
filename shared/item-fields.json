@@ -1,0 +1,14 @@
+{
+  "$comment": "The shape of an item, shared so the New item form, bulk import and the API's validation cannot drift apart. The C# domain embeds this file and the client imports it.",
+  "conditions": ["New with tags", "New without tags", "Excellent", "Good", "Fair", "For parts"],
+  "defaultCondition": "Excellent",
+  "maxLength": {
+    "title": 200,
+    "brand": 100,
+    "category": 100,
+    "size": 50,
+    "source": 100,
+    "notes": 2000,
+    "donationOrg": 100
+  }
+}

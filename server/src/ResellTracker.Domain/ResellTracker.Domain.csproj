@@ -3,8 +3,9 @@
   <!-- Pure domain logic: no EF Core, no ASP.NET Core, no package references. -->
 
   <ItemGroup>
-    <!-- The platform registry is shared with the client; see shared/platforms.json. -->
+    <!-- Shared with the client; see shared/README.md. -->
     <EmbeddedResource Include="..\..\..\shared\platforms.json" LogicalName="ResellTracker.Domain.platforms.json" />
+    <EmbeddedResource Include="..\..\..\shared\item-fields.json" LogicalName="ResellTracker.Domain.item-fields.json" />
   </ItemGroup>
 
 </Project>
