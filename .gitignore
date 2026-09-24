@@ -1,0 +1,17 @@
+# Local secrets (see .env.example)
+.env
+
+# .NET
+bin/
+obj/
+TestResults/
+*.user
+.vs/
+
+# The built SPA is copied into the API's wwwroot at publish time, never committed.
+server/src/ResellTracker.Api/wwwroot/
+
+# Editors / OS
+.idea/
+.DS_Store
+Thumbs.db
