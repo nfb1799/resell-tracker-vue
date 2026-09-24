@@ -32,7 +32,32 @@ cd server && dotnet run --project src/ResellTracker.Api   # API on :5086
 cd client && npm install && npm run dev                   # SPA on :5175, /api proxied
 ```
 
-CI runs the integration tests against a SQL Server 2025 service container.
+The development app applies migrations on startup. To add one, from `server/`
+(after `dotnet tool restore`):
+
+```bash
+dotnet ef migrations add <Name> --project src/ResellTracker.Api --output-dir Data/Migrations
+```
+
+## API
+
+Every endpoint needs a signed-in user and only ever sees that user's data. Errors
+are [ProblemDetails](https://www.rfc-editor.org/rfc/rfc9457).
+
+| Endpoint | |
+|---|---|
+| `GET /api/items?status=&platform=&q=` | The user's items, newest first, with thumbnails and computed profit |
+| `POST /api/items` | Create (the client may supply the id) |
+| `GET PUT DELETE /api/items/{id}` | Read, replace, delete |
+| `PUT DELETE /api/items/{id}/sale` | Log or edit a sale; undo it |
+| `PUT DELETE /api/items/{id}/donation` | Log or edit a donation; undo it |
+| `PUT GET DELETE /api/items/{id}/photo` | Set (thumbnail + full JPEG, multipart), fetch the full image, remove |
+| `GET PUT /api/settings` | Display name, currency, theme, monthly goal |
+| `GET PUT /api/settings/fees` | Fee schedule per platform |
+
+Changes to an existing item carry its version in `If-Match`; every item response
+includes it, and it is also the `ETag`. A stale version gets **412**, a missing one
+**428**, and a change the item's status doesn't allow (selling a donated item) **409**.
 
 ## Checks
 
@@ -41,4 +66,10 @@ cd client && npm run lint && npm test && npm run build
 cd server && dotnet format --verify-no-changes && dotnet build && dotnet test
 ```
 
-CI runs the same on every push and pull request.
+The server's integration tests run against a real SQL Server: each run creates a
+throwaway database through the migrations and drops it afterwards. Locally that is
+`.\SQLEXPRESS`; set `RESELLTRACKER_TEST_SQL` to a connection string without a
+database name to use another server.
+
+CI runs the same on every push and pull request, with SQL Server in a service
+container, and also fails if the EF model has changes no migration covers.

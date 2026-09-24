@@ -45,7 +45,9 @@ disagree, the original code wins; those spots are marked **(orig)**.
 - [ ] Fields: photo, title, brand, size, category, condition, cost, source, acquired date, platforms, list price, listed date, notes
 - [ ] Conditions: New with tags, New without tags, Excellent, Good, Fair, For parts; default Excellent
 - [ ] New item defaults from one shared field-definition module (also used by import)
-- [ ] Search; filter by status (with counts) and platform
+- [ ] Search across title, brand, category, size, source, notes and donation org; filter by status (with counts) and platform
+- [ ] Platform filter matches a sold item by the platform it sold on, anything else by where it is listed **(orig)**
+- [ ] Sort: newest, longest listed, price high/low, title A–Z **(orig)**
 - [ ] Stale-listing flag (listed 45+ days)
 - [ ] Listed but unsold items show "est. net if it sells at asking"
 - [ ] Delete item (photo goes with it)
