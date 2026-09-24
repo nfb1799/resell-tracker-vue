@@ -1,17 +1,13 @@
 using System.Net;
-using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace ResellTracker.Api.Tests;
 
-public class HealthEndpointTests(WebApplicationFactory<Program> factory)
-    : IClassFixture<WebApplicationFactory<Program>>
+public class HealthEndpointTests(ApiFactory factory)
 {
     [Fact]
     public async Task Health_returns_ok()
     {
-        var client = factory.CreateClient();
-
-        var response = await client.GetAsync("/api/health", TestContext.Current.CancellationToken);
+        var response = await factory.CreateClient().GetAsync("/api/health", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -19,10 +15,16 @@ public class HealthEndpointTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task Unknown_api_route_is_404_not_the_spa()
     {
-        var client = factory.CreateClient();
-
-        var response = await client.GetAsync("/api/nope", TestContext.Current.CancellationToken);
+        var response = await factory.CreateClient().GetAsync("/api/nope", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Item_endpoints_need_a_signed_in_user()
+    {
+        var response = await factory.CreateClient().GetAsync("/api/items", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 }
