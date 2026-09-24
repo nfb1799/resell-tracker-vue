@@ -12,7 +12,7 @@ public class OwnerIsolationTests(ApiFactory factory) : ApiTestBase(factory)
     public async Task Another_user_can_neither_see_nor_change_my_items()
     {
         var mine = await CreateItemAsync(new { title = "Mine", platforms = new[] { "ebay" } });
-        using var stranger = await Factory.CreateUserClientAsync();
+        using var stranger = (await Factory.SignUpAsync()).Client;
 
         Assert.Empty((await stranger.GetFromJsonAsync<List<ItemResponse>>("/api/items", Json, Ct))!);
         Assert.Equal(HttpStatusCode.NotFound, (await stranger.GetAsync($"/api/items/{mine.Id}", Ct)).StatusCode);
@@ -47,7 +47,7 @@ public class OwnerIsolationTests(ApiFactory factory) : ApiTestBase(factory)
     {
         await Client.PutAsJsonAsync("/api/settings/fees",
             new Dictionary<string, object> { ["ebay"] = new { percent = 1, @fixed = 0, includesShipping = true } }, Json, Ct);
-        using var stranger = await Factory.CreateUserClientAsync();
+        using var stranger = (await Factory.SignUpAsync()).Client;
 
         var theirs = await stranger.GetFromJsonAsync<Dictionary<string, FeeScheduleDto>>("/api/settings/fees", Json, Ct);
 

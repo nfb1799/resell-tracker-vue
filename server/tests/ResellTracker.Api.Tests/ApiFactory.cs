@@ -1,15 +1,14 @@
+using System.Collections.Concurrent;
 using System.Net.Http.Headers;
-using System.Security.Claims;
-using System.Text.Encodings.Web;
-using Microsoft.AspNetCore.Authentication;
+using System.Net.Http.Json;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using ResellTracker.Api.Contracts;
 using ResellTracker.Api.Data;
 
 [assembly: AssemblyFixture(typeof(ResellTracker.Api.Tests.ApiFactory))]
@@ -23,11 +22,15 @@ namespace ResellTracker.Api.Tests;
 /// The server comes from RESELLTRACKER_TEST_SQL (CI points it at a SQL Server
 /// container) and defaults to the local .\SQLEXPRESS instance with Windows auth.
 ///
-/// Tests don't share data by resetting the database; each one signs in as a fresh
-/// user, and since every query is scoped to its owner that isolates them.
+/// Tests sign in for real, through /api/auth and the session cookie, over HTTPS
+/// because the cookie is Secure. Nothing is shared by resetting the database; each
+/// test signs up as a fresh user, and every query being scoped to its owner is
+/// what keeps tests apart.
 /// </summary>
 public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    public const string Password = "secret1";
+
     private const string DefaultServer = @"Server=.\SQLEXPRESS;Trusted_Connection=True;TrustServerCertificate=True";
 
     private readonly string _connectionString = new SqlConnectionStringBuilder(
@@ -36,19 +39,20 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         InitialCatalog = $"ResellTracker_Test_{Guid.NewGuid():N}",
     }.ConnectionString;
 
+    /// <summary>Every email the app "sent", instead of a real provider.</summary>
+    public CapturingEmailSender Emails { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Default", _connectionString);
-        builder.ConfigureTestServices(services =>
-        {
-            services.AddAuthentication(o =>
-                {
-                    o.DefaultAuthenticateScheme = TestAuthHandler.SchemeName;
-                    o.DefaultChallengeScheme = TestAuthHandler.SchemeName;
-                })
-                .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
-        });
+        builder.UseSetting("App:BaseUrl", "https://resell.test");
+        builder.UseSetting("Demo:CleanupEnabled", "false");
+        // Every test signs up from the same (absent) client address; the limits
+        // themselves are tested with their own host in RateLimitTests.
+        builder.UseSetting("RateLimits:AuthPerMinute", "100000");
+        builder.UseSetting("RateLimits:DemosPerHour", "100000");
+        builder.ConfigureTestServices(services => services.AddSingleton<IEmailSender<AppUser>>(Emails));
     }
 
     public async ValueTask InitializeAsync()
@@ -67,20 +71,21 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         await base.DisposeAsync();
     }
 
-    /// <summary>A client signed in as a brand-new user who owns nothing yet.</summary>
-    public async Task<HttpClient> CreateUserClientAsync()
-    {
-        var id = Guid.NewGuid();
-        using (var scope = Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            db.Users.Add(new AppUser { Id = id, UserName = $"{id}@test", Email = $"{id}@test" });
-            await db.SaveChangesAsync();
-        }
+    /// <summary>An HTTPS client that keeps cookies, signed in as nobody yet.</summary>
+    public HttpClient CreateBrowser() => CreateBrowser(this);
 
-        var client = CreateClient();
-        client.DefaultRequestHeaders.Add(TestAuthHandler.UserHeader, id.ToString());
-        return client;
+    public static HttpClient CreateBrowser<T>(WebApplicationFactory<T> factory)
+        where T : class =>
+        factory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost"), HandleCookies = true });
+
+    /// <summary>Signs up a brand-new user who owns nothing yet, and returns their signed-in client.</summary>
+    public async Task<(HttpClient Client, MeResponse Me)> SignUpAsync()
+    {
+        var client = CreateBrowser();
+        var response = await client.PostAsJsonAsync("/api/auth/register",
+            new { email = $"{Guid.NewGuid():N}@example.test", password = Password });
+        response.EnsureSuccessStatusCode();
+        return (client, (await response.Content.ReadFromJsonAsync<MeResponse>())!);
     }
 
     /// <summary>Runs something against the database directly, for asserting on what was stored.</summary>
@@ -91,27 +96,22 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     }
 }
 
-/// <summary>
-/// Signs a request in as the user named in the X-Test-User header. Exists only in
-/// the test project; the app itself uses Identity's cookie.
-/// </summary>
-internal sealed class TestAuthHandler(
-    IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder)
-    : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+public sealed class CapturingEmailSender : IEmailSender<AppUser>
 {
-    public const string SchemeName = "Test";
-    public const string UserHeader = "X-Test-User";
+    private readonly ConcurrentDictionary<string, string> _resetLinks = new(StringComparer.OrdinalIgnoreCase);
 
-    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+    /// <summary>The last reset link mailed to an address, or null if none was.</summary>
+    public string? ResetLinkFor(string email) => _resetLinks.GetValueOrDefault(email);
+
+    public Task SendPasswordResetLinkAsync(AppUser user, string email, string resetLink)
     {
-        if (!Request.Headers.TryGetValue(UserHeader, out var user))
-        {
-            return Task.FromResult(AuthenticateResult.NoResult());
-        }
-
-        var identity = new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, user.ToString())], SchemeName);
-        return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName)));
+        _resetLinks[email] = resetLink;
+        return Task.CompletedTask;
     }
+
+    public Task SendConfirmationLinkAsync(AppUser user, string email, string confirmationLink) => throw new NotSupportedException();
+
+    public Task SendPasswordResetCodeAsync(AppUser user, string email, string resetCode) => throw new NotSupportedException();
 }
 
 internal static class HttpClientExtensions

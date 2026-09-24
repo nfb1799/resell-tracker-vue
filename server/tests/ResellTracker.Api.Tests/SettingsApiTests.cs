@@ -11,11 +11,11 @@ public class SettingsApiTests(ApiFactory factory) : ApiTestBase(factory)
         (await Client.GetFromJsonAsync<Dictionary<string, FeeScheduleDto>>("/api/settings/fees", Json, Ct))!;
 
     [Fact]
-    public async Task A_new_user_gets_default_settings()
+    public async Task A_new_user_gets_default_settings_named_after_their_email()
     {
         var settings = await Client.GetFromJsonAsync<SettingsResponse>("/api/settings", Json, Ct);
 
-        Assert.Equal(new SettingsResponse("", "USD", "dark", 0m), settings);
+        Assert.Equal(new SettingsResponse(Me.Email.Split('@')[0], "USD", "dark", 0m), settings);
     }
 
     [Fact]

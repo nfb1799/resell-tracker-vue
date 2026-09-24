@@ -20,11 +20,13 @@ public abstract class ApiTestBase(ApiFactory factory) : IAsyncLifetime
     protected HttpClient Client { get; private set; } = null!;
 
     /// <summary>The signed-in user this test class acts as.</summary>
-    protected Guid UserId => Guid.Parse(Client.DefaultRequestHeaders.GetValues(TestAuthHandler.UserHeader).Single());
+    protected MeResponse Me { get; private set; } = null!;
+
+    protected Guid UserId => Me.Id;
 
     protected static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    public async ValueTask InitializeAsync() => Client = await Factory.CreateUserClientAsync();
+    public async ValueTask InitializeAsync() => (Client, Me) = await Factory.SignUpAsync();
 
     public ValueTask DisposeAsync()
     {
