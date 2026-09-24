@@ -37,6 +37,26 @@ jobs:
     defaults:
       run:
         working-directory: server
+    # The integration tests run against a real SQL Server. Each run creates its own
+    # database through the migrations and drops it afterwards.
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2025-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_PID: Developer
+          # A throwaway container that exists only for this job.
+          MSSQL_SA_PASSWORD: Ci-Only-Passw0rd
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P Ci-Only-Passw0rd -Q 'SELECT 1' -b -o /dev/null"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+          --health-start-period 20s
+    env:
+      RESELLTRACKER_TEST_SQL: Server=localhost,1433;User Id=sa;Password=Ci-Only-Passw0rd;TrustServerCertificate=True
     steps:
       - uses: actions/checkout@v7
 
@@ -48,4 +68,7 @@ jobs:
       # Style and analyzer rules; warnings are errors (Directory.Build.props).
       - run: dotnet format --verify-no-changes --no-restore
       - run: dotnet build --no-restore --configuration Release
+      # Domain tests, then API integration tests against the container above.
       - run: dotnet test --no-build --configuration Release
+      # The model and the migrations must agree; a model change without a migration fails here.
+      - run: dotnet tool restore && dotnet ef migrations has-pending-model-changes --project src/ResellTracker.Api --no-build --configuration Release
