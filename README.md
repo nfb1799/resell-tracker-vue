@@ -75,10 +75,34 @@ Changes to an existing item carry its version in `If-Match`; every item response
 includes it, and it is also the `ETag`. A stale version gets **412**, a missing one
 **428**, and a change the item's status doesn't allow (selling a donated item) **409**.
 
+## Offline and installing
+
+The client is a PWA: installable from the browser, and usable with no connection.
+
+- **Opening offline.** The service worker precaches the app shell. The API is
+  deliberately kept out of it; instead the app saves the server's last answer
+  (items, settings, stats, who is signed in) in IndexedDB, per user, and opens
+  from that when the server can't be reached.
+- **Changes offline.** Each change joins an outbox in IndexedDB and shows at once,
+  worked out with the same TypeScript rules the forms use. When the server is
+  reachable again (the browser's online event, or a health check every 15
+  seconds while offline) the outbox is sent in order.
+- **Conflicts.** Every change carries the item version it was made against. If
+  the item changed elsewhere meanwhile, the server answers 412 and the change is
+  held under "needs your attention", showing each field it changed next to the
+  server's value: keep mine (only the fields I changed, on top of the latest) or
+  keep theirs. New items carry ids made on the device, so replaying a create the
+  server already has is harmless, and a change the server turns out to have
+  already is treated as done.
+
+Lighthouse dropped its PWA audit in version 12, so `npm run test:e2e` asks the
+browser directly (`Page.getInstallabilityErrors`) using the Chrome or Edge
+already installed; `BASE_URL=https://… npm run test:e2e` checks a deployed site.
+
 ## Checks
 
 ```bash
-cd client && npm run lint && npm test && npm run build
+cd client && npm run lint && npm test && npm run build && npm run test:e2e
 cd server && dotnet format --verify-no-changes && dotnet build && dotnet test
 ```
 

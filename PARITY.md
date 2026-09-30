@@ -117,7 +117,7 @@ disagree, the original code wins; those spots are marked **(orig)**.
 - [ ] Password reset by emailed link **(orig)**; API and reset page done, the link is logged until an email provider is chosen with hosting (Phase 7)
 - [x] 6-character minimum password **(orig)**, and the original's error wording
 - [x] Every query scoped to the signed-in owner; cross-user isolation test
-- [ ] Installable PWA
-- [ ] Reads work offline from cache; writes queue and sync on reconnect
-- [ ] Offline indicator
+- [x] Installable PWA: manifest and PNG icons from the original's artwork; Chrome's own installability check runs in CI (Lighthouse removed its PWA audit in v12)
+- [x] Reads work offline from cache; writes queue and sync on reconnect. Goes beyond the original, which relied on Firestore's cache: every change is versioned, a change that conflicts with an edit made elsewhere is held for the user to decide field by field, and a replay the server already has counts as done
+- [x] Offline indicator
 - [x] "Try the demo" from the sign-in page (replaces the original's guest sign-in): a private seeded copy per visitor, deleted after 24 hours
