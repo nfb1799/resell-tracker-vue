@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { ApiError, exportUrls } from '@/api'
 import { getLocalDateString } from '@/domain/dates'
+import { isNetworkError } from '@/offline/sync'
 import { parseMoney, ZERO } from '@/domain/money'
 import { PLATFORM_IDS, platformLabel, type FeeSchedule } from '@/domain/platforms'
 import { useAuthStore } from '@/stores/auth'
@@ -21,7 +22,14 @@ async function commit(run: () => Promise<void>) {
   try {
     await run()
   } catch (error) {
-    toast.show(error instanceof ApiError ? error.message : 'Could not save settings', 'error')
+    toast.show(
+      isNetworkError(error)
+        ? 'Settings save to your account, so they need a connection. Try again when you are back online.'
+        : error instanceof ApiError
+          ? error.message
+          : 'Could not save settings',
+      'error',
+    )
   } finally {
     saving.value = false
   }

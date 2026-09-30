@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Item } from '@/domain/item'
 
-export type SheetMode = 'new' | 'edit' | 'sell' | 'donate' | 'import'
+export type SheetMode = 'new' | 'edit' | 'sell' | 'donate' | 'import' | 'sync'
 
 /** One sheet at a time, over whichever page is showing. */
 export const useSheetStore = defineStore('sheet', () => {

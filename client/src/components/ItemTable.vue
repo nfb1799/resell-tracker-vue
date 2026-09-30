@@ -78,6 +78,8 @@ function listedMain(item: Item, days: number | null): string {
                 <PlatformBadge v-for="p in item.platforms" :key="p" :platform="p" />
               </template>
               <span v-else class="badge badge-inventory">Not listed</span>
+              <span v-if="item.syncIssue" class="badge badge-stale">needs attention</span>
+              <span v-else-if="item.unsynced" class="badge badge-inventory">not synced</span>
             </div>
           </td>
           <td>

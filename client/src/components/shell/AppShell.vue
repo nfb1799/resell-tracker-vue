@@ -11,6 +11,7 @@ import { useSheetStore } from '@/stores/sheet'
 import { useToastStore } from '@/stores/toast'
 import NavIcon from '../NavIcon.vue'
 import SheetHost from '../sheets/SheetHost.vue'
+import OfflineIndicator from './OfflineIndicator.vue'
 import SideNav from './SideNav.vue'
 
 // The signed-in app: a sidebar on desktop, a header and bottom tab bar on a phone.
@@ -84,10 +85,15 @@ function go(name: string) {
     </template>
 
     <main :class="['main-content', `page-${String(route.name)}`]">
+      <button v-if="items.issues.length" class="sync-attention" @click="sheet.open('sync')">
+        {{ items.issues.length }} offline change{{ items.issues.length === 1 ? '' : 's' }} need{{ items.issues.length === 1 ? 's' : '' }} your attention
+        <span aria-hidden="true">›</span>
+      </button>
       <RouterView />
     </main>
 
     <SheetHost />
+    <OfflineIndicator />
 
     <button v-if="!isDesktop && !sheet.mode && route.name !== 'settings'" class="fab" aria-label="Add item" @click="sheet.open('new')">+</button>
 
@@ -107,6 +113,12 @@ function go(name: string) {
 </template>
 
 <style scoped>
+.sync-attention {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%;
+  padding: 10px 14px; border-radius: 10px; border: 1px solid var(--danger-border);
+  background: var(--danger-bg); color: var(--danger-color); font: inherit; font-size: 13px; font-weight: 600;
+  text-align: left; cursor: pointer;
+}
 /* The original colours inactive tabs dimmed and the active one with the accent. */
 .bottom-tab { color: var(--text-dimmed); text-decoration: none; }
 .bottom-tab.active { color: var(--accent-primary); }

@@ -5,6 +5,7 @@ import { formatMoney, fromDollars } from '@/domain/money'
 import { platformLabel } from '@/domain/platforms'
 import { photoFromSource } from '@/lib/image'
 import { parseImport, withoutPhotos, type ImportRow } from '@/lib/importItems'
+import { useConnectionStore } from '@/stores/connection'
 import { useItemsStore } from '@/stores/items'
 import { useSettingsStore } from '@/stores/settings'
 import { useSheetStore } from '@/stores/sheet'
@@ -41,6 +42,7 @@ interface Outcome {
 }
 
 const items = useItemsStore()
+const connection = useConnectionStore()
 const settings = useSettingsStore()
 const sheet = useSheetStore()
 const toast = useToastStore()
@@ -86,6 +88,10 @@ function describe(row: ImportRow): string {
 async function runImport() {
   const plan = ready.value
   if (!plan || plan.valid.length === 0) return
+  if (!connection.online) {
+    toast.show('Bulk import needs a connection; the server checks every row. Try again when you are back online.', 'error')
+    return
+  }
 
   progress.value = `Importing ${plan.valid.length} item${plan.valid.length === 1 ? '' : 's'}…`
   try {

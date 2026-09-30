@@ -29,6 +29,7 @@ export const authApi = {
 
 export const itemsApi = {
   list: () => request<ItemDto[]>('/items'),
+  get: (id: string) => request<ItemDto>(`/items/${id}`),
   create: (body: ItemRequestDto) => request<ItemDto>('/items', { method: 'POST', body }),
   update: (id: string, version: string, body: ItemRequestDto) =>
     request<ItemDto>(`/items/${id}`, { method: 'PUT', body, version }),

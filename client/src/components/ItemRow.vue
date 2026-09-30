@@ -38,6 +38,8 @@ const onHand = computed(() => isOnHand(props.item.status))
           </template>
           <span v-else class="badge badge-inventory">Not listed</span>
           <span v-if="stale" class="badge badge-stale">{{ days }}d</span>
+          <span v-if="item.syncIssue" class="badge badge-stale">needs attention</span>
+          <span v-else-if="item.unsynced" class="badge badge-inventory">not synced</span>
           <span v-if="item.brand">{{ item.brand }}</span>
           <span v-if="item.size">· {{ item.size }}</span>
         </span>

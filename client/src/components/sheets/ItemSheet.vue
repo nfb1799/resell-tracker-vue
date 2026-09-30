@@ -49,12 +49,15 @@ const confirmDelete = ref(false)
 const busyPhoto = ref(false)
 const pending = ref<(ProcessedPhoto & { url: string }) | null>(null)
 const photoCleared = ref(false)
+const fullPhotoFailed = ref(false)
 const fileInput = useTemplateRef<HTMLInputElement>('file')
 
 // The saved photo is fetched only now that this one item is open.
 const preview = computed(() => {
   if (pending.value) return pending.value.url
   if (photoCleared.value || !props.item?.thumbnail) return ''
+  // Offline (or not synced yet) there is no full photo to fetch; the thumbnail stands in.
+  if (fullPhotoFailed.value || props.item.unsynced) return props.item.thumbnail
   return itemsApi.photoUrl(props.item.id, props.item.version)
 })
 
@@ -93,6 +96,7 @@ async function pickPhoto(event: Event) {
     pending.value = { ...photo, url: URL.createObjectURL(photo.full) }
     photoCleared.value = false
   } catch (error) {
+    console.error(error)
     toast.show(error instanceof Error ? error.message : 'Could not read that image', 'error')
   } finally {
     busyPhoto.value = false
@@ -135,6 +139,7 @@ async function save() {
     if (!isNew) toast.show('Saved', 'success')
     sheet.close()
   } catch (error) {
+    console.error(error)
     if (!(error instanceof ApiError && error.isStale)) {
       toast.show(error instanceof ApiError ? error.message : 'Could not save item', 'error')
     }
@@ -161,7 +166,7 @@ async function remove() {
   <AppSheet :title="isNew ? 'New item' : form.title || 'Edit item'" @close="sheet.close()">
     <div class="photo-field">
       <div class="photo-frame">
-        <img v-if="preview" :src="preview" :alt="form.title || 'Item photo'" />
+        <img v-if="preview" :src="preview" :alt="form.title || 'Item photo'" @error="fullPhotoFailed = true" />
         <span v-else class="photo-empty">No photo</span>
       </div>
       <div class="photo-actions">

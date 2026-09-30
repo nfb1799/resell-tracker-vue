@@ -17,6 +17,15 @@ export function useSignOut() {
   const toast = useToastStore()
 
   return async () => {
+    const waiting = items.ops.length
+    if (
+      waiting &&
+      !window.confirm(
+        `${waiting} change${waiting === 1 ? '' : 's'} made on this device ${waiting === 1 ? 'has' : 'have'} not reached the server yet. Signing out deletes ${waiting === 1 ? 'it' : 'them'}. Sign out anyway?`,
+      )
+    ) {
+      return
+    }
     try {
       await auth.logout()
     } catch {

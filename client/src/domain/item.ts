@@ -47,6 +47,10 @@ export interface Item {
   projectedNet: Cents | null
   createdAt: string
   version: string
+  /** Changed on this device and not yet on the server. */
+  unsynced: boolean
+  /** Has a change waiting on a decision: a conflict, or one the server refused. */
+  syncIssue: boolean
 }
 
 const nullableCents = (n: number | null): Cents | null => (n === null ? null : fromDollars(n))
@@ -99,6 +103,8 @@ export function fromDto(dto: ItemDto): Item {
     projectedNet: nullableCents(dto.projectedNet),
     createdAt: dto.createdAt,
     version: dto.version,
+    unsynced: false,
+    syncIssue: false,
   }
 }
 
@@ -118,10 +124,16 @@ export interface ItemFields {
   listedDate: string | null
 }
 
+/**
+ * The request body for an item's fields. Always a plain object, even when the
+ * fields come from a form's reactive() state: it may be queued in IndexedDB,
+ * which can't store Vue's proxies.
+ */
 export function toRequest(fields: ItemFields, id?: string): ItemRequestDto {
   return {
     ...(id ? { id } : {}),
     ...fields,
+    platforms: [...fields.platforms],
     cost: toDollars(fields.cost),
     listPrice: fields.listPrice === null ? null : toDollars(fields.listPrice),
   }

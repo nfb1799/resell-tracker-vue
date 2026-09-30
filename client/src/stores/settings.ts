@@ -3,6 +3,9 @@ import { computed, ref, watch } from 'vue'
 import { settingsApi, type SettingsDto } from '@/api'
 import { fromDollars, toDollars, type Cents } from '@/domain/money'
 import { withFeeDefaults, type FeeSettings } from '@/domain/platforms'
+import { readSnapshot, writeSnapshot } from '@/offline/db'
+import { isNetworkError } from '@/offline/sync'
+import { useAuthStore } from './auth'
 
 const DEFAULTS: SettingsDto = { displayName: '', currency: 'USD', theme: 'dark', profitGoal: 0 }
 
@@ -29,27 +32,55 @@ export const useSettingsStore = defineStore('settings', () => {
     },
   )
 
+  interface Saved {
+    general: SettingsDto
+    fees: FeeSettings
+  }
+
+  const userId = () => useAuthStore().me?.id ?? ''
+  const remember = () => void writeSnapshot(userId(), 'settings', { general: general.value, fees: fees.value }).catch(() => {})
+
+  /** From the server, or with no connection, from what this device saved last. */
   async function load() {
-    const [saved, savedFees] = await Promise.all([settingsApi.get(), settingsApi.getFees()])
-    general.value = saved
-    fees.value = withFeeDefaults(savedFees)
+    try {
+      const [saved, savedFees] = await Promise.all([settingsApi.get(), settingsApi.getFees()])
+      general.value = saved
+      fees.value = withFeeDefaults(savedFees)
+      remember()
+    } catch (error) {
+      if (!isNetworkError(error)) throw error
+      const saved = await readSnapshot<Saved>(userId(), 'settings').catch(() => undefined)
+      if (saved) {
+        general.value = saved.general
+        fees.value = withFeeDefaults(saved.fees)
+      }
+    }
   }
 
   async function save(changes: Partial<SettingsDto> & { profitGoalCents?: Cents }) {
     const { profitGoalCents, ...rest } = changes
     const next = { ...general.value, ...rest }
     if (profitGoalCents !== undefined) next.profitGoal = toDollars(profitGoalCents)
+    const previous = general.value
     general.value = next // optimistic, so the theme flips at once
-    general.value = await settingsApi.save(next)
+    try {
+      general.value = await settingsApi.save(next)
+      remember()
+    } catch (error) {
+      general.value = previous // settings save online only; don't pretend otherwise
+      throw error
+    }
   }
 
   async function saveFees(next: FeeSettings) {
     fees.value = withFeeDefaults(await settingsApi.saveFees(next))
+    remember()
   }
 
   /** Back to the registry's defaults: saving nothing removes every override. */
   async function resetFees() {
     fees.value = withFeeDefaults(await settingsApi.saveFees({}))
+    remember()
   }
 
   function clear() {

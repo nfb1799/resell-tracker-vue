@@ -68,6 +68,10 @@ const monthSub = computed(() => {
   </EmptyState>
 
   <template v-else>
+    <p v-if="stats.savedAt || items.pendingCount" class="dimmed stale-note">
+      <template v-if="stats.savedAt">Figures as of {{ new Date(stats.savedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) }}. </template>
+      <template v-if="items.pendingCount">{{ items.pendingCount }} change{{ items.pendingCount === 1 ? '' : 's' }} made offline will count once synced.</template>
+    </p>
     <div v-if="stats.dashboard" class="stat-grid">
       <StatTile
         wide
@@ -132,5 +136,6 @@ const monthSub = computed(() => {
 
 <style scoped>
 .small-note { font-size: 12px; }
+.stale-note { margin: 0; font-size: 12.5px; }
 .list-gap { margin-top: 8px; }
 </style>

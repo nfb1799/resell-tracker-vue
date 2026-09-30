@@ -116,6 +116,9 @@ const agingMax = computed(() => Math.max(1, ...(trends.value?.aging ?? []).map((
   </EmptyState>
 
   <template v-else>
+    <p v-if="stats.savedAt" class="dimmed small-note">
+      Figures as of {{ new Date(stats.savedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) }}, the last time this device was online.
+    </p>
     <div class="card chart-card">
       <div class="chart-head">
         <span class="section-label">Net profit by month</span>

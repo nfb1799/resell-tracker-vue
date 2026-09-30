@@ -43,6 +43,7 @@ async function save() {
     toast.show(editing ? 'Donation updated' : 'Marked as donated', 'success')
     sheet.close()
   } catch (error) {
+    console.error(error)
     if (!(error instanceof ApiError && error.isStale)) toast.show(error instanceof ApiError ? error.message : 'Could not save the donation', 'error')
     saving.value = false
   }
@@ -54,6 +55,7 @@ async function undo() {
     toast.show('Back in inventory', 'success')
     sheet.close()
   } catch (error) {
+    console.error(error)
     if (!(error instanceof ApiError && error.isStale)) toast.show('Could not undo the donation', 'error')
   }
 }

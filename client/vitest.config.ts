@@ -8,6 +8,8 @@ export default mergeConfig(
     test: {
       environment: 'happy-dom',
       exclude: [...configDefaults.exclude, 'e2e/**'],
+      // An in-memory IndexedDB, so the offline snapshot and outbox run for real in tests.
+      setupFiles: ['fake-indexeddb/auto'],
       root: fileURLToPath(new URL('./', import.meta.url)),
     },
   }),

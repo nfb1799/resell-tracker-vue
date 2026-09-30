@@ -79,6 +79,7 @@ async function save() {
     toast.show(editing ? 'Sale updated' : `Sold for ${fmt(sold.profit?.net ?? ZERO)} net`, 'success')
     sheet.close()
   } catch (error) {
+    console.error(error)
     if (!(error instanceof ApiError && error.isStale)) toast.show(error instanceof ApiError ? error.message : 'Could not save the sale', 'error')
     saving.value = false
   }
@@ -90,6 +91,7 @@ async function undo() {
     toast.show('Moved back to inventory', 'success')
     sheet.close()
   } catch (error) {
+    console.error(error)
     if (!(error instanceof ApiError && error.isStale)) toast.show('Could not undo the sale', 'error')
   }
 }
