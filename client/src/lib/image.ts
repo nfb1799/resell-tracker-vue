@@ -38,6 +38,27 @@ function drawScaled(bitmap: ImageBitmap, maxPx: number, quality: number): Promis
   )
 }
 
+/**
+ * An imported photo, given as a URL or an inline data URI, turned into a Blob and
+ * pushed through processPhoto, so it is stored exactly as an uploaded one is.
+ *
+ * Fetching someone else's image is a cross-origin request that host has to
+ * allow. Plenty do not, and that is not a reason to lose the item: the caller
+ * reports it and the item goes in without a photo.
+ */
+export async function photoFromSource(src: string): Promise<ProcessedPhoto> {
+  let response: Response
+  try {
+    response = await fetch(src, { mode: 'cors', credentials: 'omit' })
+  } catch {
+    throw new Error('that host does not let other sites read its images')
+  }
+  if (!response.ok) throw new Error(`the image host answered ${response.status}`)
+  const blob = await response.blob()
+  // Some hosts send images with no content type; createImageBitmap sniffs the real format anyway.
+  return processPhoto(blob.type.startsWith('image/') ? blob : new Blob([blob], { type: 'image/jpeg' }))
+}
+
 export async function processPhoto(file: Blob): Promise<ProcessedPhoto> {
   if (!file.type.startsWith('image/')) throw new Error('That file is not an image.')
   if (file.size > MAX_UPLOAD_BYTES) throw new Error('That image is too large — pick one under 25MB.')

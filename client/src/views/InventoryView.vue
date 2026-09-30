@@ -72,9 +72,12 @@ function clearFilters() {
         <span class="section-label">
           {{ visible.length }} item{{ visible.length === 1 ? '' : 's' }} · {{ formatMoney(shownCost, settings.currency) }} cost
         </span>
-        <select v-model="sort" class="select sort-select" aria-label="Sort">
-          <option v-for="(s, id) in SORTS" :key="id" :value="id">{{ s.label }}</option>
-        </select>
+        <div class="head-actions">
+          <button class="btn btn-sm" @click="sheet.open('import')">Bulk import</button>
+          <select v-model="sort" class="select sort-select" aria-label="Sort">
+            <option v-for="(s, id) in SORTS" :key="id" :value="id">{{ s.label }}</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -112,4 +115,5 @@ function clearFilters() {
 
 <style scoped>
 .sort-select { width: auto; }
+.head-actions { display: flex; gap: 8px; align-items: center; }
 </style>

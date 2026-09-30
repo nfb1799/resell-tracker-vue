@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { ApiError, itemsApi, type ItemDto } from '@/api'
+import { getLocalDateString } from '@/domain/dates'
 import { fromDto, toRequest, type Item, type ItemFields } from '@/domain/item'
 import { toDollars, type Cents } from '@/domain/money'
 import type { SaleFigures } from '@/domain/profit'
@@ -100,6 +101,16 @@ export const useItemsStore = defineStore('items', () => {
 
   const removePhoto = (item: Item) => change(() => itemsApi.removePhoto(item.id, item.version))
 
+  /** Sends pasted rows to the server, which checks them again and adds the good ones. */
+  async function importRows(rows: unknown[]) {
+    const result = await itemsApi.import(rows, getLocalDateString())
+    const added = new Map<number, Item>()
+    for (const row of result.rows) {
+      if (row.item) added.set(row.rowNumber, upsert(row.item))
+    }
+    return { ...result, added }
+  }
+
   async function remove(item: Item) {
     await itemsApi.remove(item.id, item.version)
     items.value = items.value.filter((i) => i.id !== item.id)
@@ -120,6 +131,7 @@ export const useItemsStore = defineStore('items', () => {
     undoDonation,
     setPhoto,
     removePhoto,
+    importRows,
     remove,
   }
 })

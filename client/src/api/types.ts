@@ -112,6 +112,20 @@ export interface SettingsDto {
 
 export type FeeSettingsDto = Record<string, FeeSchedule>
 
+export interface ImportRowResultDto {
+  rowNumber: number
+  label: string
+  status: 'added' | 'skipped'
+  errors: string[]
+  item: ItemDto | null
+}
+
+export interface ImportResultDto {
+  added: number
+  skipped: number
+  rows: ImportRowResultDto[]
+}
+
 export interface TotalsDto {
   gross: number
   payout: number

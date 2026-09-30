@@ -4,7 +4,8 @@ import EmptyState from '@/components/EmptyState.vue'
 import ItemRow from '@/components/ItemRow.vue'
 import SalesTable from '@/components/SalesTable.vue'
 import { useIsDesktop } from '@/composables/useMediaQuery'
-import { monthKey } from '@/domain/dates'
+import { exportUrls } from '@/api'
+import { getLocalDateString, monthKey } from '@/domain/dates'
 import { formatMoney, formatSigned } from '@/domain/money'
 import { totalProfit } from '@/domain/profit'
 import { monthLabel } from '@/lib/format'
@@ -50,6 +51,7 @@ const saleCount = computed(() => months.value.reduce((n, m) => n + m.items.lengt
   <template v-else>
     <div class="page-head">
       <span class="section-label">{{ saleCount }} sales</span>
+      <a class="btn btn-sm" :href="exportUrls.csv(getLocalDateString(), 'sold')" download>Export CSV</a>
     </div>
 
     <div v-for="month in months" :key="month.key">

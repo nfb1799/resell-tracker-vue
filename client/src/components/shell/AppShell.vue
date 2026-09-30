@@ -53,6 +53,7 @@ function go(name: string) {
       :display-name="displayName"
       :account-line="accountLine"
       @add="sheet.open('new')"
+      @import="sheet.open('import')"
       @sign-out="signOut"
     />
     <header v-else class="app-header">

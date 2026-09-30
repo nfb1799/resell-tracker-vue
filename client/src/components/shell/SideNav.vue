@@ -6,7 +6,7 @@ import NavIcon from '../NavIcon.vue'
 // there is no room; a desktop has a whole column going spare, so the destinations,
 // the primary action and the account all stay visible at once.
 defineProps<{ tabs: RouteLocationResolved[]; displayName: string; accountLine: string }>()
-const emit = defineEmits<{ add: []; signOut: [] }>()
+const emit = defineEmits<{ add: []; import: []; signOut: [] }>()
 const route = useRoute()
 </script>
 
@@ -17,6 +17,7 @@ const route = useRoute()
     </div>
 
     <button class="btn btn-primary side-nav-add" @click="emit('add')"><span aria-hidden="true">+</span> New item</button>
+    <button class="btn btn-sm side-nav-import" @click="emit('import')">Bulk import</button>
 
     <ul class="side-nav-list">
       <li v-for="tab in tabs" :key="String(tab.name)">

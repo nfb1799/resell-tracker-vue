@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { ApiError } from '@/api'
+import { ApiError, exportUrls } from '@/api'
+import { getLocalDateString } from '@/domain/dates'
 import { parseMoney, ZERO } from '@/domain/money'
 import { PLATFORM_IDS, platformLabel, type FeeSchedule } from '@/domain/platforms'
 import { useAuthStore } from '@/stores/auth'
@@ -13,6 +14,7 @@ const items = useItemsStore()
 const auth = useAuthStore()
 const toast = useToastStore()
 const saving = ref(false)
+const today = getLocalDateString()
 
 async function commit(run: () => Promise<void>) {
   saving.value = true
@@ -151,6 +153,20 @@ const demoExpires = computed(() =>
 
   <div class="card settings-group">
     <span class="section-label">Your data</span>
+    <div class="toggle-row">
+      <div class="toggle-row-text">
+        <span class="toggle-row-title">Export CSV</span>
+        <span class="toggle-row-sub">Every item with its profit breakdown</span>
+      </div>
+      <a class="btn btn-sm" :href="exportUrls.csv(today)" download>Export</a>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-row-text">
+        <span class="toggle-row-title">Download backup</span>
+        <span class="toggle-row-sub">Raw JSON of items and settings, photos excluded. Bulk import reads it back.</span>
+      </div>
+      <a class="btn btn-sm" :href="exportUrls.backup(today)" download>Backup</a>
+    </div>
     <div class="toggle-row">
       <div class="toggle-row-text">
         <span class="toggle-row-title">Signed in as</span>

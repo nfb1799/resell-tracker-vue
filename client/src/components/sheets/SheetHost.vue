@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useItemsStore } from '@/stores/items'
 import { useSheetStore } from '@/stores/sheet'
+import BulkImportSheet from './BulkImportSheet.vue'
 import DonateSheet from './DonateSheet.vue'
 import ItemSheet from './ItemSheet.vue'
 import SellSheet from './SellSheet.vue'
@@ -18,6 +19,7 @@ const key = computed(() => `${sheet.mode}:${sheet.itemId ?? 'new'}`)
 
 <template>
   <ItemSheet v-if="sheet.mode === 'new'" :key="key" :item="null" />
+  <BulkImportSheet v-else-if="sheet.mode === 'import'" />
   <template v-else-if="item">
     <ItemSheet v-if="sheet.mode === 'edit'" :key="key" :item="item" />
     <SellSheet v-else-if="sheet.mode === 'sell'" :key="key" :item="item" />

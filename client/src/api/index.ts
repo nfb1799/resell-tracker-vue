@@ -4,6 +4,7 @@ import type {
   DonationRequestDto,
   FeeSettingsDto,
   ItemDto,
+  ImportResultDto,
   ItemRequestDto,
   MeDto,
   SaleRequestDto,
@@ -46,6 +47,9 @@ export const itemsApi = {
     return request<ItemDto>(`/items/${id}/photo`, { method: 'PUT', body: form, version })
   },
   removePhoto: (id: string, version: string) => request<ItemDto>(`/items/${id}/photo`, { method: 'DELETE', version }),
+  /** Rows exactly as pasted (photos left out); the server validates them again and adds the good ones. */
+  import: (rows: unknown[], today: string) =>
+    request<ImportResultDto>(`/items/import?today=${today}`, { method: 'POST', body: rows }),
   /** For an img src; the version busts the browser cache when the photo changes. */
   photoUrl: (id: string, version: string) => `/api/items/${id}/photo?v=${encodeURIComponent(version)}`,
 }
@@ -55,6 +59,12 @@ export const settingsApi = {
   save: (body: SettingsDto) => request<SettingsDto>('/settings', { method: 'PUT', body }),
   getFees: () => request<FeeSettingsDto>('/settings/fees'),
   saveFees: (body: FeeSettingsDto) => request<FeeSettingsDto>('/settings/fees', { method: 'PUT', body }),
+}
+
+/** Plain links: the browser downloads them with the session cookie, no script needed. */
+export const exportUrls = {
+  csv: (today: string, status?: 'sold') => `/api/export/csv?today=${today}${status ? `&status=${status}` : ''}`,
+  backup: (today: string) => `/api/export/json?today=${today}`,
 }
 
 export const statsApi = {
