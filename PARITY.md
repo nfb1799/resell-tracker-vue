@@ -44,7 +44,7 @@ disagree, the original code wins; those spots are marked **(orig)**.
 
 - [x] Fields: photo, title, brand, size, category, condition, cost, source, acquired date, platforms, list price, listed date, notes
 - [x] Conditions: New with tags, New without tags, Excellent, Good, Fair, For parts; default Excellent
-- [ ] New item defaults from one shared field-definition module (also used by import): `shared/item-fields.json`, read by the form and the API; import in Phase 5
+- [x] New item defaults from one shared field-definition module (also used by import): `shared/item-fields.json`, read by the form, the importer and the API
 - [x] Search across title, brand, category, size, source, notes and donation org; filter by status (with counts) and platform
 - [x] Platform filter matches a sold item by the platform it sold on, anything else by where it is listed **(orig)**
 - [x] Sort: newest, longest listed, price high/low, title A–Z **(orig)**
@@ -84,18 +84,18 @@ disagree, the original code wins; those spots are marked **(orig)**.
 
 ## Export and import
 
-- [ ] CSV: every item, the original's 30 columns in order, including `Fees estimated`; UTF-8 BOM
-- [ ] Raw JSON backup
-- [ ] Bulk import from pasted JSON or `.json` file; single object accepted
-- [ ] Only `title` (or `name`) required; defaults from the shared field module
-- [ ] Accepts written names (`sourcedFrom`, `askingPrice`, `listingPlatform`) and the app's own
-- [ ] Platform and condition matched case-insensitively by id or label
-- [ ] Money accepts `20`, `"20"`, `"$20.50"`; rejects non-numeric with a reason
-- [ ] Per-row failures (bad condition, unknown platform, non-numeric cost, malformed date, missing title) while valid rows import
-- [ ] Photo from `https://` URL or `data:image/...;base64`; fetch failure is a warning, not a failure
-- [ ] Summary ("11 added, 1 skipped")
-- [ ] Validated on the server too; same service path as form-created items
-- [ ] Round trip: export then import produces identical items
+- [x] CSV: every item, the original's 30 columns in order, including `Fees estimated`; UTF-8 BOM. Also defuses cells that would run as spreadsheet formulas
+- [x] Raw JSON backup (photos excluded, as in the original)
+- [x] Bulk import from pasted JSON or `.json` file; single object accepted, and a backup file's `{ items: [...] }`
+- [x] Only `title` (or `name`) required; defaults from the shared field module
+- [x] Accepts written names (`sourcedFrom`, `askingPrice`, `listingPlatform`) and the app's own
+- [x] Platform and condition matched case-insensitively by id or label
+- [x] Money accepts `20`, `"20"`, `"$20.50"`; rejects non-numeric with a reason
+- [x] Per-row failures (bad condition, unknown platform, non-numeric cost, malformed date, missing title) while valid rows import
+- [x] Photo from `https://` URL or `data:image/...;base64`; fetch failure is a warning, not a failure
+- [x] Summary ("11 added, 1 skipped")
+- [x] Validated on the server too; same service path as form-created items
+- [x] Round trip: export then import produces identical items. The original's import ignored sales and donations, so a backup could not restore them; this one reads them back, through the same sell and donate paths as the sheets
 
 ## Photos
 

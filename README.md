@@ -67,6 +67,9 @@ Errors are [ProblemDetails](https://www.rfc-editor.org/rfc/rfc9457).
 | `PUT GET DELETE /api/items/{id}/photo` | Set (thumbnail + full JPEG, multipart), fetch the full image, remove |
 | `GET PUT /api/settings` | Display name, currency, theme, monthly goal |
 | `GET PUT /api/settings/fees` | Fee schedule per platform |
+| `GET /api/stats/dashboard` `/trends` | Overview tiles and trends, computed on the server |
+| `POST /api/items/import` | Bulk import: every row checked again, good rows added, bad ones reported |
+| `GET /api/export/csv` `/json` | CSV with the full profit breakdown; JSON backup that imports back in |
 
 Changes to an existing item carry its version in `If-Match`; every item response
 includes it, and it is also the `ETag`. A stale version gets **412**, a missing one
