@@ -12,6 +12,7 @@
   <ItemGroup>
     <!-- The same cases the client runs, so the two implementations cannot drift. -->
     <Content Include="..\..\..\shared\profit-cases.json" Link="profit-cases.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\shared\import-cases.json" Link="import-cases.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

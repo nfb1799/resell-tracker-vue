@@ -1,0 +1,243 @@
+{
+  "$comment": "Bulk-import row cases shared by the C# domain tests and the client Vitest suite: each row either becomes this item or is skipped with exactly these errors. Rows are 0-indexed; labels and row numbers count from 1. Defaults (acquired date, listed date) use 'today'. Money is in dollars.",
+  "today": "2026-09-30",
+  "cases": [
+    {
+      "name": "maps the written field names onto the stored ones",
+      "row": {
+        "title": "Nautica Polo", "brand": "Nautica", "size": "XL", "category": "Shirt", "condition": "Good",
+        "cost": 0, "acquiredDate": "2026-08-28", "sourcedFrom": "Dad", "listingPlatform": "Depop",
+        "askingPrice": 20, "listedDate": "2026-08-28", "notes": "", "photo": "https://example.com/P0.jpg"
+      },
+      "expected": {
+        "label": "Nautica Polo",
+        "item": {
+          "title": "Nautica Polo", "brand": "Nautica", "category": "Shirt", "size": "XL", "condition": "Good",
+          "notes": "", "cost": 0, "source": "Dad", "acquiredDate": "2026-08-28", "platforms": ["depop"],
+          "listPrice": 20, "listedDate": "2026-08-28", "status": "listed", "sale": null, "donation": null
+        },
+        "photo": { "src": "https://example.com/P0.jpg", "kind": "url" }
+      }
+    },
+    {
+      "name": "also accepts this app's own field names, so an export round-trips",
+      "row": { "title": "Tee", "source": "Bins", "listPrice": 15, "platforms": ["ebay", "vinted"], "listedDate": "2026-09-01" },
+      "expected": {
+        "label": "Tee",
+        "item": {
+          "title": "Tee", "brand": "", "category": "", "size": "", "condition": "Excellent", "notes": "", "cost": 0,
+          "source": "Bins", "acquiredDate": "2026-09-30", "platforms": ["ebay", "vinted"], "listPrice": 15,
+          "listedDate": "2026-09-01", "status": "listed", "sale": null, "donation": null
+        },
+        "photo": null
+      }
+    },
+    {
+      "name": "matches platform and condition case-insensitively, and drops a repeated platform",
+      "row": { "title": "Tee", "listingPlatform": ["DEPOP", "depop"], "condition": "excellent" },
+      "expected": {
+        "label": "Tee",
+        "item": {
+          "title": "Tee", "brand": "", "category": "", "size": "", "condition": "Excellent", "notes": "", "cost": 0,
+          "source": "", "acquiredDate": "2026-09-30", "platforms": ["depop"], "listPrice": null,
+          "listedDate": "2026-09-30", "status": "listed", "sale": null, "donation": null
+        },
+        "photo": null
+      }
+    },
+    {
+      "name": "leaves an item in stock when no platform is named, with the form's defaults",
+      "row": { "title": "Bare" },
+      "expected": {
+        "label": "Bare",
+        "item": {
+          "title": "Bare", "brand": "", "category": "", "size": "", "condition": "Excellent", "notes": "", "cost": 0,
+          "source": "", "acquiredDate": "2026-09-30", "platforms": [], "listPrice": null,
+          "listedDate": null, "status": "inventory", "sale": null, "donation": null
+        },
+        "photo": null
+      }
+    },
+    {
+      "name": "reads money written with a currency symbol or thousands separator",
+      "row": { "title": "Tee", "cost": "$12.50", "askingPrice": "1,240" },
+      "expected": {
+        "label": "Tee",
+        "item": {
+          "title": "Tee", "brand": "", "category": "", "size": "", "condition": "Excellent", "notes": "", "cost": 12.5,
+          "source": "", "acquiredDate": "2026-09-30", "platforms": [], "listPrice": 1240,
+          "listedDate": null, "status": "inventory", "sale": null, "donation": null
+        },
+        "photo": null
+      }
+    },
+    {
+      "name": "accepts name as the title",
+      "row": { "name": "  Levi's 501  " },
+      "expected": {
+        "label": "Levi's 501",
+        "item": {
+          "title": "Levi's 501", "brand": "", "category": "", "size": "", "condition": "Excellent", "notes": "", "cost": 0,
+          "source": "", "acquiredDate": "2026-09-30", "platforms": [], "listPrice": null,
+          "listedDate": null, "status": "inventory", "sale": null, "donation": null
+        },
+        "photo": null
+      }
+    },
+    {
+      "name": "recognises a base64 data URI photo",
+      "row": { "title": "Tee", "photo": "data:image/jpeg;base64,/9j/4AAQSkZJRg==" },
+      "expected": {
+        "label": "Tee",
+        "item": {
+          "title": "Tee", "brand": "", "category": "", "size": "", "condition": "Excellent", "notes": "", "cost": 0,
+          "source": "", "acquiredDate": "2026-09-30", "platforms": [], "listPrice": null,
+          "listedDate": null, "status": "inventory", "sale": null, "donation": null
+        },
+        "photo": { "src": "data:image/jpeg;base64,/9j/4AAQSkZJRg==", "kind": "dataUri" }
+      }
+    },
+    {
+      "name": "restores a sold item from a backup, sale included",
+      "row": {
+        "title": "Carhartt jacket", "cost": 22, "platforms": ["depop"], "listPrice": 140, "listedDate": "2026-06-10",
+        "acquiredDate": "2026-06-01", "status": "sold",
+        "sale": { "platform": "depop", "listedFor": 140, "price": 138, "payout": 144.6, "shippingCharged": 12, "shippingCost": 11.4, "otherCosts": 1, "date": "2026-06-24" }
+      },
+      "expected": {
+        "label": "Carhartt jacket",
+        "item": {
+          "title": "Carhartt jacket", "brand": "", "category": "", "size": "", "condition": "Excellent", "notes": "", "cost": 22,
+          "source": "", "acquiredDate": "2026-06-01", "platforms": ["depop"], "listPrice": 140,
+          "listedDate": "2026-06-10", "status": "sold",
+          "sale": { "platform": "depop", "listedFor": 140, "price": 138, "payout": 144.6, "shippingCharged": 12, "shippingCost": 11.4, "otherCosts": 1, "date": "2026-06-24" },
+          "donation": null
+        },
+        "photo": null
+      }
+    },
+    {
+      "name": "a sale without a payout keeps it unknown, and listed-for falls back to the asking price",
+      "row": { "title": "Hoodie", "listPrice": 120, "sale": { "platform": "eBay", "price": 115, "date": "2026-09-28" } },
+      "expected": {
+        "label": "Hoodie",
+        "item": {
+          "title": "Hoodie", "brand": "", "category": "", "size": "", "condition": "Excellent", "notes": "", "cost": 0,
+          "source": "", "acquiredDate": "2026-09-30", "platforms": [], "listPrice": 120,
+          "listedDate": null, "status": "sold",
+          "sale": { "platform": "ebay", "listedFor": 120, "price": 115, "payout": null, "shippingCharged": 0, "shippingCost": 0, "otherCosts": 0, "date": "2026-09-28" },
+          "donation": null
+        },
+        "photo": null
+      }
+    },
+    {
+      "name": "restores a donated item from a backup",
+      "row": { "title": "Cargo shorts", "cost": 5, "platforms": ["depop"], "listedDate": "2026-03-01", "donation": { "date": "2026-09-18", "org": "Goodwill", "receiptValue": 8 } },
+      "expected": {
+        "label": "Cargo shorts",
+        "item": {
+          "title": "Cargo shorts", "brand": "", "category": "", "size": "", "condition": "Excellent", "notes": "", "cost": 5,
+          "source": "", "acquiredDate": "2026-09-30", "platforms": ["depop"], "listPrice": null,
+          "listedDate": "2026-03-01", "status": "donated", "sale": null,
+          "donation": { "date": "2026-09-18", "org": "Goodwill", "receiptValue": 8 }
+        },
+        "photo": null
+      }
+    },
+    {
+      "name": "requires a title",
+      "row": { "brand": "Nike" },
+      "expected": { "label": "Row 1", "errors": ["title is required"] }
+    },
+    {
+      "name": "rejects a title that is only whitespace",
+      "row": { "title": "   " },
+      "expected": { "label": "Row 1", "errors": ["title is required"] }
+    },
+    {
+      "name": "rejects an unknown condition rather than storing the typo",
+      "row": { "title": "Tee", "condition": "Mint" },
+      "expected": { "label": "Tee", "errors": ["condition \"Mint\" is not one of New with tags, New without tags, Excellent, Good, Fair, For parts"] }
+    },
+    {
+      "name": "rejects an unknown platform",
+      "row": { "title": "Tee", "listingPlatform": "Grailed" },
+      "expected": { "label": "Tee", "errors": ["listingPlatform \"Grailed\" is not one of Depop, eBay, Vinted, Other"] }
+    },
+    {
+      "name": "rejects money that is not a number, rather than quietly storing zero",
+      "row": { "title": "Tee", "cost": "twenty" },
+      "expected": { "label": "Tee", "errors": ["cost is not a number (got \"twenty\")"] }
+    },
+    {
+      "name": "rejects money of the wrong type",
+      "row": { "title": "Tee", "cost": true },
+      "expected": { "label": "Tee", "errors": ["cost is not a number"] }
+    },
+    {
+      "name": "rejects negative money and fractions of a cent",
+      "row": { "title": "Tee", "cost": -4, "askingPrice": 12.345 },
+      "expected": { "label": "Tee", "errors": ["cost can't be negative", "askingPrice can't have more than 2 decimal places"] }
+    },
+    {
+      "name": "rejects a malformed date",
+      "row": { "title": "Tee", "acquiredDate": "28/08/2026" },
+      "expected": { "label": "Tee", "errors": ["acquiredDate must look like 2026-08-28 (got \"28/08/2026\")"] }
+    },
+    {
+      "name": "rejects a date that doesn't exist",
+      "row": { "title": "Tee", "listedDate": "2026-02-31" },
+      "expected": { "label": "Tee", "errors": ["listedDate is not a real date (got \"2026-02-31\")"] }
+    },
+    {
+      "name": "rejects a photo that is neither a URL nor a data URI",
+      "row": { "title": "Tee", "photo": "IMG_2231.jpg" },
+      "expected": { "label": "Tee", "errors": ["photo must be an http(s) URL or a data:image/…;base64 URI"] }
+    },
+    {
+      "name": "rejects text longer than the item fields allow",
+      "row": { "title": "Tee", "brand": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" },
+      "expected": { "label": "Tee", "errors": ["brand can't be longer than 100 characters"] }
+    },
+    {
+      "name": "rejects a row that is not an object at all",
+      "row": "Nautica Polo",
+      "expected": { "label": "Row 1", "errors": ["not a JSON object"] }
+    },
+    {
+      "name": "rejects a null row",
+      "row": null,
+      "expected": { "label": "Row 1", "errors": ["not a JSON object"] }
+    },
+    {
+      "name": "collects every problem in a row, not just the first",
+      "row": { "condition": "Mint", "cost": "free" },
+      "expected": {
+        "label": "Row 1",
+        "errors": [
+          "title is required",
+          "condition \"Mint\" is not one of New with tags, New without tags, Excellent, Good, Fair, For parts",
+          "cost is not a number (got \"free\")"
+        ]
+      }
+    },
+    {
+      "name": "rejects a sale without the essentials",
+      "row": { "title": "Tee", "sale": { "platform": "Grailed", "price": 0 } },
+      "expected": {
+        "label": "Tee",
+        "errors": [
+          "sale.platform \"Grailed\" is not one of Depop, eBay, Vinted, Other",
+          "sale.price must be more than 0",
+          "sale.date is required"
+        ]
+      }
+    },
+    {
+      "name": "rejects a row that is both sold and donated",
+      "row": { "title": "Tee", "sale": { "platform": "vinted", "price": 10, "date": "2026-09-01" }, "donation": { "date": "2026-09-02" } },
+      "expected": { "label": "Tee", "errors": ["a row can't have both a sale and a donation"] }
+    }
+  ]
+}
