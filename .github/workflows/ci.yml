@@ -31,6 +31,11 @@ jobs:
       - run: npm test
       # Type-checks with vue-tsc, then builds.
       - run: npm run build
+      # The browser's own installability check (Lighthouse no longer has one) and an
+      # offline load, on the Chrome the runner already has.
+      - run: npm run test:e2e
+        env:
+          PLAYWRIGHT_CHANNEL: chrome
 
   server:
     runs-on: ubuntu-latest
