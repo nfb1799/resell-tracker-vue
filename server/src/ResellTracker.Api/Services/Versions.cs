@@ -7,6 +7,9 @@ public static class Versions
 {
     public static string Format(byte[] rowVersion) => $"\"{Convert.ToBase64String(rowVersion)}\"";
 
+    /// <summary>The row version a formatted version string names.</summary>
+    public static byte[] Parse(string version) => Convert.FromBase64String(version.Trim('"'));
+
     /// <summary>The row version an If-Match header names, or null if there is none or it's malformed.</summary>
     public static byte[]? FromIfMatch(IHeaderDictionary headers)
     {

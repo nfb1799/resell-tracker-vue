@@ -72,6 +72,8 @@ builder.Services.AddScoped<SettingsService>();
 builder.Services.AddScoped<ItemService>();
 builder.Services.AddScoped<DemoService>();
 builder.Services.AddScoped<StatsService>();
+builder.Services.AddScoped<ImportService>();
+builder.Services.AddScoped<ExportService>();
 if (builder.Configuration.GetValue("Demo:CleanupEnabled", true))
 {
     builder.Services.AddHostedService<DemoCleanupService>();
