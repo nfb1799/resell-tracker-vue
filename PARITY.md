@@ -114,7 +114,7 @@ disagree, the original code wins; those spots are marked **(orig)**.
 ## Auth, offline, demo
 
 - [x] Email/password sign up (name defaults to the start of the email), sign in, sign out
-- [ ] Password reset by emailed link **(orig)**; API and reset page done, the link is logged until an email provider is chosen with hosting (Phase 7)
+- [ ] Password reset by emailed link **(orig)**; API, reset page and Resend sender done (tested against a fake Resend); ticked once a real email arrives from the deployed app
 - [x] 6-character minimum password **(orig)**, and the original's error wording
 - [x] Every query scoped to the signed-in owner; cross-user isolation test
 - [x] Installable PWA: manifest and PNG icons from the original's artwork; Chrome's own installability check runs in CI (Lighthouse removed its PWA audit in v12)

@@ -52,7 +52,7 @@ limited per client, and five wrong passwords lock an account for five minutes.
 | `POST /api/auth/register` `login` `logout` | Email and password (6+ characters, as in the original) |
 | `GET /api/auth/me` | Who is signed in; a demo account says when it expires |
 | `POST /api/auth/demo` | A private demo account seeded from `shared/demo-items.json`, deleted after 24 hours |
-| `POST /api/auth/forgot-password` `reset-password` | Emailed reset link. Until an email provider is chosen, the link is written to the log |
+| `POST /api/auth/forgot-password` `reset-password` | Emailed reset link (Resend). Without an API key, development writes the link to the log |
 
 Everything else needs a signed-in user and only ever sees that user's data.
 Errors are [ProblemDetails](https://www.rfc-editor.org/rfc/rfc9457).
@@ -98,6 +98,32 @@ The client is a PWA: installable from the browser, and usable with no connection
 Lighthouse dropped its PWA audit in version 12, so `npm run test:e2e` asks the
 browser directly (`Page.getInstallabilityErrors`) using the Chrome or Edge
 already installed; `BASE_URL=https://… npm run test:e2e` checks a deployed site.
+
+## Deployment
+
+One container: the API serving the built SPA from `wwwroot` (see the
+`Dockerfile`), on **Azure Container Apps**, with **Azure SQL Database** on the free
+offer. Both scale to zero when idle, so the first visit after a quiet spell takes
+a few seconds while the container starts and the database resumes; the API
+retries the database's "still waking up" errors rather than failing.
+
+- **CI/CD.** Every push builds the image. On `main` it is pushed to GitHub's
+  container registry, rolled out with `az containerapp update`, and the live site
+  is checked: it answers, and Chrome finds it installable and usable offline.
+  GitHub signs in to Azure with OIDC, so no Azure password is stored anywhere.
+- **Configuration**, set by `infra/azure-setup.sh` as Container Apps settings and
+  secrets: `ConnectionStrings__Default`, `Email__ResendApiKey`, `App__BaseUrl`
+  (where reset links point), `Database__MigrateOnStartup`, and
+  `Proxy__TrustForwardedHeaders` (client IPs for rate limiting, behind the proxy).
+- **Sessions survive restarts.** The keys that encrypt the sign-in cookie are kept
+  in the database rather than the container.
+- **Email.** Password-reset links go out through Resend. Without a verified domain
+  Resend only delivers to the account owner's address; adding a domain and setting
+  `Email__From` lifts that with no code change.
+
+To set it up from nothing: push to `main` once so CI publishes the image, make the
+package public on GitHub, run `infra/azure-setup.sh` in Azure Cloud Shell, and add
+the repository variables it prints. Every later push to `main` deploys itself.
 
 ## Checks
 
