@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -6,9 +7,15 @@ using ResellTracker.Domain;
 
 namespace ResellTracker.Api.Data;
 
+/// <summary>
+/// Also holds the keys that encrypt sign-in cookies, so sessions survive the
+/// container restarting or scaling to zero (see Program.cs).
+/// </summary>
 public class AppDbContext(DbContextOptions<AppDbContext> options)
-    : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options)
+    : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options), IDataProtectionKeyContext
 {
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+
     public DbSet<Item> Items => Set<Item>();
     public DbSet<ItemPlatform> ItemPlatforms => Set<ItemPlatform>();
     public DbSet<Sale> Sales => Set<Sale>();

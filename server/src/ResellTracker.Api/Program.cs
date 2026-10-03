@@ -1,5 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ResellTracker.Api.Data;
@@ -14,7 +16,29 @@ builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 
 builder.Services.AddDbContext<AppDbContext>(o =>
-    o.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+    o.UseSqlServer(builder.Configuration.GetConnectionString("Default"), sql =>
+        // A serverless database pauses when idle and refuses connections for up to
+        // a minute while it resumes; retrying rides that out instead of failing
+        // the first request after a quiet spell.
+        sql.EnableRetryOnFailure(maxRetryCount: 8, maxRetryDelay: TimeSpan.FromSeconds(15), errorNumbersToAdd: null)));
+
+// The keys that encrypt sign-in cookies live in the database, not the container:
+// otherwise every restart or scale-from-zero would mint new keys and sign
+// everyone out, and two instances couldn't read each other's cookies.
+builder.Services.AddDataProtection().PersistKeysToDbContext<AppDbContext>().SetApplicationName("ResellTracker");
+
+// Hosted behind a TLS-terminating proxy, the client's address and scheme arrive
+// in X-Forwarded-* headers. Trusted only when configured, since anything can send them.
+if (builder.Configuration.GetValue<bool>("Proxy:TrustForwardedHeaders"))
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(o =>
+    {
+        o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        // The proxy's address isn't fixed; the app is reachable only through it.
+        o.KnownIPNetworks.Clear();
+        o.KnownProxies.Clear();
+    });
+}
 
 builder.Services
     .AddIdentityCore<AppUser>(o =>
@@ -63,7 +87,7 @@ builder.Services.ConfigureApplicationCookie(o =>
 builder.Services.Configure<SecurityStampValidatorOptions>(o => o.ValidationInterval = TimeSpan.FromMinutes(5));
 builder.Services.AddAuthorization();
 builder.Services.AddAppRateLimits(builder.Configuration);
-builder.Services.AddTransient<IEmailSender<AppUser>, LoggingEmailSender>();
+builder.Services.AddAppEmail(builder.Configuration);
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton(TimeProvider.System);
@@ -87,13 +111,23 @@ if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
     await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
 }
 
+if (app.Configuration.GetValue<bool>("Proxy:TrustForwardedHeaders"))
+{
+    app.UseForwardedHeaders();
+}
+
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
 
 // Same-origin hosting: the built Vue app is copied into wwwroot and served from
 // here, so the API and the SPA share one origin and auth cookies stay first-party.
 app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions { OnPrepareResponse = StaticCaching.Apply });
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -103,7 +137,7 @@ app.MapControllers();
 
 // Client-side routes (/inventory, /sales, ...) fall through to the SPA. Anything
 // under /api that no controller matched stays a 404 instead of returning HTML.
-app.MapFallbackToFile("index.html");
+app.MapFallbackToFile("index.html", new StaticFileOptions { OnPrepareResponse = StaticCaching.Apply });
 app.MapFallback("/api/{**path}", () => Results.NotFound());
 
 await app.RunAsync();

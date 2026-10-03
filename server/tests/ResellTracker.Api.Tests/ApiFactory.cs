@@ -55,20 +55,24 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.ConfigureTestServices(services => services.AddSingleton<IEmailSender<AppUser>>(Emails));
     }
 
+    // The app retries "cannot open database" because a paused Azure database says
+    // that while it wakes up. A test database that doesn't exist yet says it too, so
+    // creating and dropping it goes through a plain context that gives up at once.
+    private AppDbContext Admin() => new(new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(_connectionString).Options);
+
     public async ValueTask InitializeAsync()
     {
-        using var scope = Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+        await using var db = Admin();
+        await db.Database.MigrateAsync();
     }
 
     public override async ValueTask DisposeAsync()
     {
-        using (var scope = Services.CreateScope())
-        {
-            await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.EnsureDeletedAsync();
-        }
-
+        // Stop the app first, then drop its database, so nothing in it is still
+        // reaching for a database that has gone.
         await base.DisposeAsync();
+        await using var db = Admin();
+        await db.Database.EnsureDeletedAsync();
     }
 
     /// <summary>An HTTPS client that keeps cookies, signed in as nobody yet.</summary>
