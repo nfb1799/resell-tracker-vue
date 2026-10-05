@@ -37,12 +37,13 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    padding: 22px 14px 18px;
-    background: var(--bg-secondary);
-    border-right: 1px solid var(--border-subtle);
+    padding: 24px 14px 16px;
+    background: var(--bg-nav);
+    border-right: 1px solid var(--border-color);
   }
 
-  .side-nav-brand { padding: 0 10px 14px; }
+  .side-nav-brand { padding: 0 10px 20px; }
+  .side-nav-brand .app-brand-sub { font-size: 12px; }
 
   .side-nav-add {
     justify-content: flex-start;
@@ -51,7 +52,6 @@
     font-size: 14px;
   }
 
-  .side-nav-import { justify-content: center; margin-bottom: 14px; }
 
   .side-nav-list {
     list-style: none;
@@ -67,20 +67,25 @@
     align-items: center;
     gap: 11px;
     width: 100%;
-    padding: 9px 10px;
+    padding: 9px 11px;
     border: none;
-    border-radius: 9px;
+    border-radius: 8px;
     background: none;
     color: var(--text-muted);
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 13.5px;
+    font-weight: 500;
     text-align: left;
     cursor: pointer;
     transition: background .12s, color .12s;
   }
 
   .side-nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
-  .side-nav-item.active { background: var(--bg-accent); color: var(--accent-primary); }
+  /* The current page is a filled pill, the way the reference desk marks it. */
+  .side-nav-item.active {
+    background: var(--accent-primary);
+    color: var(--accent-ink);
+    box-shadow: 0 6px 18px rgba(var(--accent-rgb), .3);
+  }
   .side-nav-item.danger:hover { color: var(--danger-color); }
 
   .side-nav-foot {
@@ -92,8 +97,28 @@
     border-top: 1px solid var(--border-subtle);
   }
 
-  .side-nav-account { padding: 2px 10px 10px; }
-  .side-nav-name { font-size: 13.5px; font-weight: 600; }
+  .side-nav-section {
+    padding: 14px 11px 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-dimmed);
+  }
+
+  .side-nav-account {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-secondary);
+    min-width: 0;
+  }
+
+  .side-nav-account .app-avatar { width: 32px; height: 32px; flex-basis: 32px; font-size: 13px; cursor: default; }
+  .side-nav-account-text { min-width: 0; }
+  .side-nav-name { font-size: 13px; font-weight: 600; }
 
   .side-nav-mail {
     font-size: 11.5px;
@@ -107,7 +132,7 @@
 
   .page-header {
     display: flex;
-    align-items: baseline;
+    align-items: flex-end;
     justify-content: space-between;
     gap: 16px;
     max-width: 1180px;
@@ -116,8 +141,8 @@
     width: 100%;
   }
 
-  .page-header h1 { font-size: 27px; letter-spacing: -0.025em; }
-  .page-header-sub { font-size: 13px; color: var(--text-muted); }
+  .page-header h1 { font-size: 26px; letter-spacing: -0.025em; }
+  .page-header-sub { display: block; margin-top: 3px; font-size: 13px; color: var(--text-dimmed); }
 
   .app--desktop .main-content {
     /* `margin: 0 auto` (inherited from the mobile rule) beats a grid item's
@@ -139,11 +164,15 @@
   }
 
   .app--desktop .page-dashboard > .stat-grid,
-  .app--desktop .page-dashboard > .empty-state { grid-column: 1 / -1; }
+  .app--desktop .page-dashboard > .empty-state,
+  .app--desktop .page-dashboard > p { grid-column: 1 / -1; }
 
-  .app--desktop .stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .app--desktop .stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  .app--desktop .stat-tile { padding: 16px 18px; gap: 8px; }
   .app--desktop .stat-tile.wide { grid-column: span 2; }
-  .app--desktop .stat-value { font-size: 25px; }
+  .app--desktop .stat-value { font-size: 26px; }
+  .app--desktop .chart-box { height: 240px; }
+
 
   /* ───────── trends: the month chart full width, breakdowns beside it ───────── */
 
@@ -153,7 +182,8 @@
     align-items: start;
   }
 
-  .app--desktop .page-analytics > .chart-card { grid-column: 1 / -1; }
+  .app--desktop .page-analytics > .chart-card,
+  .app--desktop .page-analytics > .empty-state { grid-column: 1 / -1; }
 
   /* ───────── settings: two readable columns rather than one long scroll ───────── */
 
@@ -167,17 +197,22 @@
 
   /* ───────── filters on one line ───────── */
 
+  /* Search and both chip rows flow on one line while they fit, and wrap
+     whole rather than clipping chips when they do not. */
   .app--desktop .filter-bar {
-    display: grid;
-    grid-template-columns: minmax(220px, 300px) 1fr auto;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 12px;
+    gap: 10px 12px;
   }
 
+  .app--desktop .filter-bar > .input { flex: 1 1 240px; max-width: 320px; }
+  .app--desktop .filter-bar > .chip-row { flex: 0 0 auto; overflow: visible; }
+
   .app--desktop .filter-bar > .page-head {
-    grid-column: 1 / -1;
-    border-top: 1px solid var(--border-subtle);
-    padding-top: 12px;
+    flex: 1 1 100%;
+    border-top: 1px solid var(--border-color);
+    padding-top: 14px;
   }
 
   /* ───────── data tables ───────── */
@@ -185,7 +220,7 @@
   .table-wrap {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    border-radius: 14px;
+    border-radius: var(--radius);
     overflow: hidden;
     box-shadow: var(--card-shadow);
   }
@@ -200,15 +235,12 @@
     position: sticky;
     top: 0;
     z-index: 1;
-    background: var(--bg-tertiary);
+    background: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
-    padding: 9px 14px;
+    padding: 11px 16px;
     text-align: left;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: .11em;
-    text-transform: uppercase;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 500;
     color: var(--text-dimmed);
     white-space: nowrap;
   }
@@ -229,7 +261,7 @@
     outline-offset: -2px;
   }
 
-  .data-table td { padding: 9px 14px; vertical-align: middle; }
+  .data-table td { padding: 10px 16px; vertical-align: middle; }
 
   .col-thumb { width: 62px; padding-right: 0 !important; }
   .col-action { width: 78px; text-align: right; }
@@ -262,7 +294,7 @@
   }
 
   .th-sort:hover { color: var(--text-primary); }
-  .th-sort.active { color: var(--accent-primary); }
+  .th-sort.active { color: var(--accent-text); }
   .th-caret { font-size: 8px; }
 
   /* Dimmed rather than hidden: an invisible-but-clickable button in every row

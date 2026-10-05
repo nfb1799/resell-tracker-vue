@@ -104,8 +104,9 @@ function clearFilters() {
           {{ visible.length }} item{{ visible.length === 1 ? '' : 's' }} · {{ formatMoney(shownCost, currency) }} cost
         </span>
         <div style="display: flex; gap: 8px; align-items: center">
-          <button class="btn btn-sm" @click="emit('bulk-import')">Bulk import</button>
-          <select v-model="sort" class="select" style="width: auto">
+          <!-- On desktop the page header carries Bulk import. -->
+          <button v-if="!isDesktop" class="btn btn-sm" @click="emit('bulk-import')">Bulk import</button>
+          <select v-model="sort" class="range-select" aria-label="Sort">
             <option v-for="(s, id) in SORTS" :key="id" :value="id">{{ s.label }}</option>
           </select>
         </div>

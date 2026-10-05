@@ -99,9 +99,9 @@ const sheetKey = computed(() => (sheet.value ? `${sheet.value.mode}:${sheet.valu
       :page="page"
       :display-name="userProfile?.displayName"
       :email="currentUser?.email"
+      :initials="initials"
       @navigate="goTo"
       @add-item="addItem"
-      @bulk-import="bulkImport"
       @logout="handleLogout"
     />
     <header v-else class="app-header">
@@ -115,8 +115,11 @@ const sheetKey = computed(() => (sheet.value ? `${sheet.value.mode}:${sheet.valu
     </header>
 
     <div v-if="isDesktop" class="page-header">
-      <h1>{{ PAGES[page].title }}</h1>
-      <span class="page-header-sub">{{ PAGES[page].sub }}</span>
+      <div>
+        <h1>{{ PAGES[page].title }}</h1>
+        <span class="page-header-sub">{{ PAGES[page].sub }}</span>
+      </div>
+      <button v-if="page !== 'settings'" class="btn btn-sm" @click="bulkImport">Bulk import</button>
     </div>
 
     <template v-if="!isDesktop && profileMenuOpen">
@@ -132,7 +135,8 @@ const sheetKey = computed(() => (sheet.value ? `${sheet.value.mode}:${sheet.valu
     </template>
 
     <main :class="['main-content', `page-${page}`]">
-      <DashboardPage v-if="page === 'dashboard'" @open="openItem" @sell="sellItem" @add="addItem" />
+      <DashboardPage v-if="page === 'dashboard'"
+        @open="openItem" @sell="sellItem" @add="addItem" @settings="goTo('settings')" />
       <InventoryPage v-else-if="page === 'inventory'"
         @open="openItem" @sell="sellItem" @add="addItem" @bulk-import="bulkImport" />
       <SalesPage v-else-if="page === 'sales'" @open="openItem" />

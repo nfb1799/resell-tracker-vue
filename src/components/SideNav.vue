@@ -9,8 +9,9 @@ defineProps({
   page: { type: String, required: true },
   displayName: { type: String, default: '' },
   email: { type: String, default: '' },
+  initials: { type: String, default: 'U' },
 })
-const emit = defineEmits(['navigate', 'add-item', 'bulk-import', 'logout'])
+const emit = defineEmits(['navigate', 'add-item', 'logout'])
 </script>
 
 <template>
@@ -23,10 +24,7 @@ const emit = defineEmits(['navigate', 'add-item', 'bulk-import', 'logout'])
       <span aria-hidden="true">+</span> New item
     </button>
 
-    <button class="btn btn-sm side-nav-import" @click="emit('bulk-import')">
-      Bulk import
-    </button>
-
+    <span class="side-nav-section">Menu</span>
     <ul class="side-nav-list">
       <li v-for="tab in tabs" :key="tab.id">
         <button
@@ -34,18 +32,13 @@ const emit = defineEmits(['navigate', 'add-item', 'bulk-import', 'logout'])
           :aria-current="tab.id === page ? 'page' : undefined"
           @click="emit('navigate', tab.id)"
         >
-          <TabIcon :id="tab.id" :size="18"
-            :color="tab.id === page ? 'var(--accent-primary)' : 'var(--text-muted)'" />
+          <TabIcon :id="tab.id" :size="18" color="currentColor" />
           <span>{{ tab.label }}</span>
         </button>
       </li>
     </ul>
 
     <div class="side-nav-foot">
-      <div class="side-nav-account">
-        <div class="side-nav-name">{{ displayName || 'You' }}</div>
-        <div class="side-nav-mail">{{ email || 'Guest account' }}</div>
-      </div>
       <button
         :class="['side-nav-item', { active: page === 'settings' }]"
         :aria-current="page === 'settings' ? 'page' : undefined"
@@ -67,6 +60,13 @@ const emit = defineEmits(['navigate', 'add-item', 'bulk-import', 'logout'])
         </svg>
         <span>Sign out</span>
       </button>
+      <div class="side-nav-account">
+        <span class="app-avatar" aria-hidden="true" style="display: grid; place-items: center">{{ initials }}</span>
+        <div class="side-nav-account-text">
+          <div class="side-nav-name">{{ displayName || 'You' }}</div>
+          <div class="side-nav-mail">{{ email || 'Guest account' }}</div>
+        </div>
+      </div>
     </div>
   </nav>
 </template>

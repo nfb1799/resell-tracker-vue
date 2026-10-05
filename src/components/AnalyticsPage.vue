@@ -1,27 +1,18 @@
 <script setup>
-import { computed } from 'vue'
-import { Bar } from 'vue-chartjs'
-import { Chart, BarElement, CategoryScale, LinearScale, Tooltip } from 'chart.js'
+import { ref, computed } from 'vue'
 import { useItems } from '../composables/useItems'
-import { useThemeColors } from '../composables/useThemeColors'
 import { computeProfit, totalProfit, formatMoney, formatPercent, num } from '../lib/money'
-import { monthKey, monthLabel, daysListed } from '../lib/date'
+import { monthLabel, daysListed } from '../lib/date'
 import { PLATFORM_IDS, platformLabel } from '../lib/platforms'
 import { isOnHand } from '../lib/status'
+import { rangeKeys, monthlyTotals, tickLabel } from '../lib/series'
 import EmptyState from './ui/EmptyState.vue'
 import BreakdownBar from './ui/BreakdownBar.vue'
+import PanelCard from './ui/PanelCard.vue'
+import RangeSelect from './ui/RangeSelect.vue'
+// This whole page is already a lazy chunk, so the chart can load with it.
+import BarChart from './charts/BarChart.vue'
 
-// Register only the pieces the one bar chart uses, so the rest of Chart.js
-// tree-shakes out of this lazy chunk.
-Chart.register(BarElement, CategoryScale, LinearScale, Tooltip)
-
-const TOKENS = [
-  'success-color', 'danger-color', 'border-subtle', 'text-dimmed', 'bg-secondary',
-  'border-color', 'text-primary', 'accent-primary',
-  'depop-color', 'ebay-color', 'vinted-color', 'other-color',
-]
-
-const MONTHS_SHOWN = 12
 const AGE_BUCKETS = [
   { label: '0–30 days', min: 0, max: 30 },
   { label: '31–60', min: 31, max: 60 },
@@ -29,101 +20,20 @@ const AGE_BUCKETS = [
   { label: '90+', min: 91, max: Infinity },
 ]
 
-// Every calendar month from the first sale to now, so gaps read as gaps rather
-// than being silently skipped by the axis.
-function monthSeries(sold, feeSettings) {
-  if (sold.length === 0) return []
-  const keys = sold.map(i => monthKey(i.sale?.date)).filter(Boolean).sort()
-  if (keys.length === 0) return []
-  const [startY, startM] = keys[0].split('-').map(Number)
-  const now = new Date()
-
-  const series = []
-  const cursor = new Date(startY, startM - 1, 1)
-  while (cursor <= now) {
-    const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`
-    const inMonth = sold.filter(i => monthKey(i.sale?.date) === key)
-    const totals = totalProfit(inMonth, feeSettings)
-    series.push({
-      key,
-      // Axis ticks stay short; January carries the year so the span is readable.
-      label: cursor.toLocaleDateString(undefined, {
-        month: 'short',
-        ...(cursor.getMonth() === 0 ? { year: '2-digit' } : {}),
-      }),
-      net: totals.net,
-      gross: totals.gross,
-      fees: totals.fees,
-      count: totals.count,
-    })
-    cursor.setMonth(cursor.getMonth() + 1)
-  }
-  return series.slice(-MONTHS_SHOWN)
-}
-
 const { items, loading, currency, feeSettings } = useItems()
-const colors = useThemeColors(TOKENS)
 
 const sold = computed(() => items.value.filter(i => i.status === 'sold'))
-const series = computed(() => monthSeries(sold.value, feeSettings.value))
 
-const chartData = computed(() => ({
-  labels: series.value.map(d => d.label),
-  datasets: [{
-    data: series.value.map(d => d.net),
-    backgroundColor: series.value.map(d => (d.net >= 0 ? colors.value['success-color'] : colors.value['danger-color'])),
-    borderRadius: { topLeft: 4, topRight: 4 },
-    borderSkipped: false,
-    maxBarThickness: 38,
-  }],
-}))
-
-const chartOptions = computed(() => {
-  const c = colors.value
-  const tick = { color: c['text-dimmed'], font: { size: 10 } }
-  return {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: false,
-    layout: { padding: { top: 4, right: 12 } },
-    scales: {
-      x: { grid: { display: false }, border: { display: false }, ticks: { ...tick, autoSkip: true, maxRotation: 0 } },
-      y: {
-        grid: { color: c['border-subtle'] },
-        border: { display: false },
-        ticks: {
-          ...tick,
-          callback: (v) => (Math.abs(v) >= 1000 ? `${Math.round(v / 100) / 10}k` : v),
-        },
-      },
-    },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: c['bg-secondary'],
-        borderColor: c['border-color'],
-        borderWidth: 1,
-        cornerRadius: 10,
-        padding: { x: 11, y: 8 },
-        titleColor: c['text-primary'],
-        bodyColor: c['text-primary'],
-        footerColor: c['text-dimmed'],
-        footerFont: { weight: 'normal', size: 12 },
-        titleFont: { size: 12.5 },
-        bodyFont: { size: 12.5 },
-        displayColors: false,
-        callbacks: {
-          title: (ctx) => monthLabel(series.value[ctx[0].dataIndex].key),
-          label: (ctx) => `${formatMoney(series.value[ctx.dataIndex].net, currency.value)} net`,
-          footer: (ctx) => {
-            const d = series.value[ctx[0].dataIndex]
-            return `${d.count} sold · ${formatMoney(d.gross, currency.value)} in · ${formatMoney(d.fees, currency.value)} fees`
-          },
-        },
-      },
-    },
-  }
-})
+const months = ref(12)
+const series = computed(() => monthlyTotals(sold.value, feeSettings.value, rangeKeys(sold.value, months.value)))
+const seriesTooltip = {
+  title: (i) => monthLabel(series.value[i].key),
+  label: (i) => `${formatMoney(series.value[i].net, currency.value)} net`,
+  footer: (i) => {
+    const d = series.value[i]
+    return `${d.count} sold · ${formatMoney(d.gross, currency.value)} in · ${formatMoney(d.fees, currency.value)} fees`
+  },
+}
 
 const byPlatform = computed(() => {
   const rows = PLATFORM_IDS.map(id => {
@@ -189,47 +99,45 @@ const best = computed(() => {
   </EmptyState>
 
   <template v-else>
-    <div class="card chart-card">
-      <div class="chart-head">
-        <span class="section-label">Net profit by month</span>
-        <span class="dimmed" style="font-size: 12px">after fees &amp; shipping</span>
-      </div>
-      <div style="position: relative; height: 220px">
-        <Bar :data="chartData" :options="chartOptions" aria-label="Net profit by month" />
-      </div>
-    </div>
+    <PanelCard class="chart-card" title="Net profit by month" sub="After fees, shipping and cost of goods">
+      <template #actions><RangeSelect v-model="months" label="Net profit range" /></template>
+      <BarChart
+        :labels="series.map(d => tickLabel(d.key))"
+        :values="series.map(d => d.net)"
+        :color-tokens="series.map(d => (d.net >= 0 ? 'chart-1' : 'danger-color'))"
+        :tooltip="seriesTooltip"
+        aria-label="Net profit by month"
+      />
+    </PanelCard>
 
-    <div class="card settings-group">
-      <span class="section-label">Profit by platform</span>
+    <PanelCard title="Profit by platform" sub="All-time net, and what each one kept in fees">
       <BreakdownBar
         v-for="row in byPlatform.rows"
         :key="row.id"
         :label="row.label"
         :value="row.net"
         :share="Math.abs(row.net) / byPlatform.max"
-        :color="colors[`${row.id}-color`]"
+        :color="`var(--${row.id}-color)`"
         :currency="currency"
         :note="`${row.count} sold · ${formatMoney(row.fees, currency)} fees`"
       />
-    </div>
+    </PanelCard>
 
-    <div class="card settings-group">
-      <span class="section-label">Cash sitting in unsold stock</span>
+    <PanelCard title="Cash sitting in unsold stock" sub="Cost of what you hold, by how long it has sat">
       <BreakdownBar
-        v-for="bucket in aging"
+        v-for="(bucket, i) in aging"
         :key="bucket.label"
         :label="bucket.label"
         :value="bucket.cost"
         :share="bucket.cost / maxAgingCost"
-        :color="colors['accent-primary']"
+        :color="`var(--chart-${[2, 4, 3, 5][i]})`"
         :currency="currency"
         :note="`${bucket.count} item${bucket.count === 1 ? '' : 's'}`"
       />
-    </div>
+    </PanelCard>
 
-    <div class="card">
-      <span class="section-label">By category</span>
-      <div class="breakdown" style="margin-top: 8px">
+    <PanelCard title="By category" sub="Net profit · margin · average days to sell">
+      <div class="breakdown">
         <div v-for="row in byCategory" :key="row.label" class="breakdown-row">
           <span class="breakdown-label">
             {{ row.label }}<span class="dimmed"> · {{ row.count }} sold</span>
@@ -242,13 +150,12 @@ const best = computed(() => {
           </span>
         </div>
       </div>
-    </div>
+    </PanelCard>
 
-    <div v-if="best" class="card">
-      <span class="section-label">Best flip so far</span>
-      <div class="breakdown" style="margin-top: 8px">
+    <PanelCard v-if="best" title="Best flip so far" sub="Highest net profit on a single item">
+      <div class="breakdown">
         <div class="breakdown-row">
-          <span class="breakdown-label">{{ best.item.title }}</span>
+          <span class="breakdown-label" style="color: var(--text-primary); font-weight: 600">{{ best.item.title }}</span>
           <span class="breakdown-value pos">{{ formatMoney(best.profit.net, currency) }}</span>
         </div>
         <div class="breakdown-row">
@@ -262,6 +169,6 @@ const best = computed(() => {
           </span>
         </div>
       </div>
-    </div>
+    </PanelCard>
   </template>
 </template>
