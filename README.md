@@ -1,7 +1,10 @@
 # Resell Tracker
 
-Inventory, sales and profit tracking for Depop, eBay and Vinted. Vue 3 + Vite PWA
-backed by Firebase, so it installs on a phone and syncs with the desktop.
+Inventory, sales and profit tracking for Depop, eBay and Vinted, laid out like a
+trading dashboard. Vue 3 + Vite PWA backed by Firebase, so it installs on a phone
+and syncs with the desktop.
+
+**Live:** <https://nfb1799.github.io/resell-tracker-vue/>
 
 Every item carries one number that matters: what you actually kept after platform
 fees, shipping and what you paid for it.
@@ -21,12 +24,20 @@ security rules, so both apps read and write the same inventory.
 - **Shallow refs for Firestore data.** Documents are replaced wholesale on every
   snapshot, so they are held in `shallowRef`s: no deep proxies, and what goes back
   to Firestore is always a plain object.
-- **Charts** use Chart.js through `vue-chartjs`, lazy-loaded with the Trends tab.
+- **Charts** use Chart.js through `vue-chartjs` (`src/components/charts/`), in a
+  lazy chunk so the first paint does not wait for them. Month series come from
+  `src/lib/series.js`, which is pure and tested.
+- **Design tokens** live in `src/index.css` for both themes: charcoal panels on
+  hairline borders, one royal-blue accent, and a six-colour chart palette.
 - `src/lib/` (profit math, import parsing, CSV, image resizing) is framework-free
   and shared verbatim with the React app, tests included.
 
 ## What it does
 
+- **Overview** — stat tiles for this month's net profit (with the change from last
+  month), margin, cash tied up and listed value; a running all-time profit chart,
+  profit by platform, a progress tracker for your monthly goal and how much stock is
+  listed, recent sales, and the listings sitting longest.
 - **Inventory** — photo, title, brand, size, condition, cost, where you sourced it,
   and which platforms it is listed on. Search and filter by status or platform.
 - **Sales** — a **Sold** button on any inventory row jumps straight to the sale,
@@ -48,8 +59,8 @@ security rules, so both apps read and write the same inventory.
 
 ## Bulk import
 
-**Bulk import** (beside New item in the sidebar, and in the Inventory header on a
-phone) takes a pasted JSON array or a `.json` file:
+**Bulk import** (top right of each page on desktop, and in the Inventory header on
+a phone) takes a pasted JSON array or a `.json` file:
 
 ```json
 [{ "title": "Nautica Polo", "brand": "Nautica", "size": "XL", "category": "Shirt",
@@ -83,8 +94,9 @@ form uses, so imported items behave identically, computed figures included.
 
 Below 1024px the app is the phone design it started as: a bottom tab bar, a
 floating add button, and each item as a stacked card. At 1024px and up it becomes
-a desktop app — a persistent sidebar, a page header, four stat tiles across, and
-inventory and sales as dense sortable tables instead of cards.
+a desktop app — a persistent sidebar, a page header, four stat tiles across, charts
+in side-by-side panels, and inventory and sales as dense sortable tables instead of
+cards.
 
 The split is deliberate rather than one layout stretched: `src/desktop.css` holds
 every desktop rule behind one media query, so a phone resolves none of it, and
