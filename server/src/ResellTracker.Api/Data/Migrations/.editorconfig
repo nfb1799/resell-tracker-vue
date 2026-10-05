@@ -1,3 +1,0 @@
-# EF Core writes these; analyzers and dotnet format leave generated code alone.
-[*.cs]
-generated_code = true

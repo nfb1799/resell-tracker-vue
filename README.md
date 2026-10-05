@@ -1,141 +1,231 @@
-# Resell Tracker (Vue + ASP.NET Core)
+# Resell Tracker
 
-A port of [Resell Tracker](https://github.com/nfb1799/resell-tracker) (React + Firebase)
-to a Vue 3 + TypeScript front end and an ASP.NET Core API on SQL Server. Work in
-progress; see [PARITY.md](PARITY.md) for what has been carried over so far.
+Inventory, sales and profit tracking for Depop, eBay and Vinted. Vue 3 + Vite PWA
+backed by Firebase, so it installs on a phone and syncs with the desktop.
 
-## Layout
+Every item carries one number that matters: what you actually kept after platform
+fees, shipping and what you paid for it.
 
-| Path | What |
+This is a Vue port of [resell-tracker](https://github.com/nfb1799/resell-tracker)
+(React). It talks to the same Firebase project with the same data model and
+security rules, so both apps read and write the same inventory.
+
+## How the Vue version is put together
+
+- **Composition API, `<script setup>` SFCs**, plain JavaScript.
+- **Three providers** (`src/providers/`) stand in for the React contexts: toast,
+  auth and items. Each `provide`s refs plus actions under a key from
+  `src/composables/keys.js`, and screens read them with `useToast()`, `useAuth()`
+  and `useItems()`. The demo harness provides in-memory versions under the same
+  keys, which is why every screen runs unchanged against sample data.
+- **Shallow refs for Firestore data.** Documents are replaced wholesale on every
+  snapshot, so they are held in `shallowRef`s: no deep proxies, and what goes back
+  to Firestore is always a plain object.
+- **Charts** use Chart.js through `vue-chartjs`, lazy-loaded with the Trends tab.
+- `src/lib/` (profit math, import parsing, CSV, image resizing) is framework-free
+  and shared verbatim with the React app, tests included.
+
+## What it does
+
+- **Inventory** — photo, title, brand, size, condition, cost, where you sourced it,
+  and which platforms it is listed on. Search and filter by status or platform.
+- **Sales** — a **Sold** button on any inventory row jumps straight to the sale,
+  prefilled with the asking price and the platform it was listed on. Record what you
+  listed it for and the offer you accepted; the breakdown updates as you type: how
+  far it came down, what the platform kept, cost of goods, shipping, net, margin,
+  ROI and days held. Grouped by month with a running total.
+- **Donations** — stock that is never going to sell gets marked donated instead,
+  with the date and where it went. It leaves "cash tied up" and the aging buckets
+  the moment you do, and its cost shows up as a write-off.
+- **Real payouts, estimates as backup** — with a payout entered the platform's cut
+  is derived from it and no rate table is consulted. Without one, editable
+  per-platform rates stand in, and anything resting on them is labelled "est."
+- **Trends** — net profit by month, profit by platform, cash sitting in unsold
+  stock by age, and profit by category.
+- **Export** — CSV of every item with its full profit breakdown, plus a raw JSON
+  backup.
+- Works offline (writes queue and sync when you are back on signal).
+
+## Bulk import
+
+**Bulk import** (beside New item in the sidebar, and in the Inventory header on a
+phone) takes a pasted JSON array or a `.json` file:
+
+```json
+[{ "title": "Nautica Polo", "brand": "Nautica", "size": "XL", "category": "Shirt",
+   "condition": "Good", "cost": 0, "acquiredDate": "2026-08-28", "sourcedFrom": "Dad",
+   "listingPlatform": "Depop", "askingPrice": 20, "listedDate": "2026-08-28",
+   "notes": "", "photo": "https://…/P0.jpg" }]
+```
+
+Only `title` is required — everything else falls back to the same defaults the New
+item form uses, since both read them from `src/lib/itemFields.js`. The written
+field names map onto the stored ones (`sourcedFrom` → `source`, `askingPrice` →
+`listPrice`, `listingPlatform` → the `platforms` array), and this app's own names
+are accepted too, so an export round-trips.
+
+`photo` takes either an `https://` URL or a `data:image/…;base64,` URI. Both are
+turned into a Blob and pushed through the same `processPhoto` an uploaded file
+goes through, so an imported photo is stored identically — a small thumbnail on
+the item and the full JPEG in its own document.
+
+Every row is checked before anything is written: a bad condition, an unknown
+platform, a cost that isn't a number, a malformed date or a missing title fails
+that row with a reason and skips it, while the valid rows still import. Fetching a
+photo from a host that blocks cross-origin reads is a warning, not a failure — the
+item goes in without it. The run ends on a summary ("11 added, 1 skipped"), never a
+silent redirect.
+
+Nothing here writes directly: rows go through the same `addItem`/`setPhoto` the
+form uses, so imported items behave identically, computed figures included.
+
+## Two layouts
+
+Below 1024px the app is the phone design it started as: a bottom tab bar, a
+floating add button, and each item as a stacked card. At 1024px and up it becomes
+a desktop app — a persistent sidebar, a page header, four stat tiles across, and
+inventory and sales as dense sortable tables instead of cards.
+
+The split is deliberate rather than one layout stretched: `src/desktop.css` holds
+every desktop rule behind one media query, so a phone resolves none of it, and
+`useIsDesktop()` (`src/composables/useMediaQuery.js`) picks the structural pieces — sidebar
+vs tab bar, table vs cards — so only one version is ever in the DOM.
+
+## Setup
+
+```bash
+npm install
+```
+
+Create a Firebase project (the free tier is ample):
+
+1. <https://console.firebase.google.com> → add project.
+2. **Build → Authentication** → enable **Email/Password** and **Anonymous**.
+3. **Build → Firestore Database** → create a database in production mode.
+4. **Project settings → Your apps** → add a **Web app**, copy its config.
+5. Copy `.env.example` to `.env` and fill in the six values.
+6. Publish the security rules in `firestore.rules` — paste them into the Firestore
+   **Rules** tab, or `firebase deploy --only firestore:rules`.
+
+```bash
+npm run dev
+```
+
+If `.env` is missing, the app shows these setup steps instead of a blank screen.
+
+## Try it without Firebase
+
+`npm run dev`, then open <http://localhost:5176/resell-tracker-vue/demo.html>. That entry
+(`src/demo.js` + `src/DemoHarness.vue`) renders the real screens against sample inventory held in memory —
+useful for a look around before setting anything up, and for working on the UI
+without touching real data. It is dev-only and not part of `npm run build`.
+
+## Scripts
+
+| Command | Does |
 |---|---|
-| `client/` | Vue 3, TypeScript (strict), Pinia, Vue Router, Vite, Vitest |
-| `server/` | ASP.NET Core Web API (.NET 10), xUnit |
-| `shared/` | Test fixtures both halves run against |
-| `docker-compose.yml` | Optional local SQL Server for machines with Docker |
+| `npm run dev` | Dev server |
+| `npm run build` | Production build into `dist/` |
+| `npm run preview` | Serve the built app |
+| `npm test` | Run the profit-math tests |
+| `npm run lint` | ESLint |
 
-## Running locally
+## How profit is worked out
 
-Requires Node 24, the .NET 10 SDK and SQL Server 2019 or later. On Windows the
-default connection string points at a local **SQL Server Express** instance
-(`.\SQLEXPRESS`, Windows auth), so no Docker is needed; LocalDB works too.
-Elsewhere, or if you prefer a container:
-
-```bash
-cp .env.example .env          # then set a SQL Server password
-docker compose up -d
+```
+gross = offer accepted + shipping the buyer paid
+net   = payout - cost of goods - shipping you paid - other costs
 ```
 
-and point `ConnectionStrings__Default` at `localhost,1433`.
+A sale keeps both **listed for** and **offer accepted**, so the haggling is on the
+record: what you asked, what you took, and the gap between them. Listed-for is
+snapshotted onto the sale, so editing the item later cannot rewrite history.
 
-```bash
-cd server && dotnet run --project src/ResellTracker.Api   # API on :5086
-cd client && npm install && npm run dev                   # SPA on :5175, /api proxied
+The payout is the pivot, and there are two ways it gets there:
+
+| | fees | payout | shown as |
+|---|---|---|---|
+| you entered the payout | `gross - payout` | what you typed | exact |
+| you haven't yet | the platform's rate | `gross - fees` | "est." |
+
+So a sale logged the moment it happens still shows a sensible number, and going
+back to type the real payout replaces the estimate everywhere — the CSV keeps a
+`Fees estimated` column marking which rows are still guesses.
+
+Estimates also drive the projected net on anything still listed ("est. net if it
+sells at asking"), which is the point of keeping them around.
+
+### Fee rates
+
+Seeded in `src/lib/platforms.js`, editable in Settings:
+
+| Platform | Rate | Notes |
+|---|---|---|
+| Depop | 3.3% + $0.45 | Payment processing on the whole order. The US 10% selling fee moved to buyers in 2024. |
+| eBay | 13.25% + $0.40 | Final value fee for most categories, on price + shipping. |
+| Vinted | 0% | Sellers pay nothing; the buyer pays Buyer Protection. |
+
+Rates vary by country, category and account, and they change — check them against a
+real payout. A sale carrying its actual payout ignores them entirely.
+
+## Donated stock
+
+Write-offs are kept apart from sale profit rather than folded into it — "I made $40
+on that jacket" and "I gave up on $18 of stock" are two different facts, and
+averaging them into one number hides both. The dashboard shows the write-off total
+on its own tile; the CSV carries the donation date, where it went, any receipt
+value, and the cost written off.
+
+The receipt value is recorded as typed and used in no calculation. Deductibility
+for donated resale inventory has its own rules — that is a question for whoever
+does your taxes, not for this app.
+
+## Photos
+
+Cloud Storage for Firebase needs a billing account attached (since 3 February 2026,
+even for a few KB), so photos avoid it entirely. A picked image is resized in the
+browser into two JPEGs:
+
+| | Size | Lives in | Read when |
+|---|---|---|---|
+| thumbnail | ~96px, a few KB | the item document | every list, no extra request |
+| full | ~900px, under 100KB | `items/{id}/media/photo` | you open that one item |
+
+Keeping the big one in its own document means syncing a whole inventory does not
+drag every photo down with it. One photo per item; Firestore caps a document at
+1 MiB and both sizes stay well inside that.
+
+## Data model
+
+One Firestore collection, `users/{uid}/items`, holding the whole lifecycle:
+
+```
+inventory → listed → sold      the money came back
+                   → donated   it did not
 ```
 
-The development app applies migrations on startup. To add one, from `server/`
-(after `dotnet tool restore`):
+A sold item keeps a `sale` map (`platform`, `listedFor`, `price`, `payout`,
+`shippingCharged`, `shippingCost`, `otherCosts`, `date`) — `price` is the accepted
+offer, and `payout` null means "not known yet". A donated one keeps a `donation` map
+(`date`, `org`, `receiptValue`) alongside its original cost, so profit never
+needs a join. Rules restrict every document to its owner, and split
+`create, update` from `delete` — on a delete there is no `request.resource`, so a
+validation written against it would error and deny the whole operation.
 
-```bash
-dotnet ef migrations add <Name> --project src/ResellTracker.Api --output-dir Data/Migrations
-```
+## Adding a platform
 
-## API
+`src/lib/platforms.js` — add an entry with its default fee schedule, then add a
+`--<id>-color` token in `src/index.css` for both themes. The filters, badges,
+charts and fee editor pick it up from there.
 
-Accounts are ASP.NET Core Identity with a session cookie that is HttpOnly, Secure
-and SameSite=Strict. The SPA is served from the same origin, so the cookie is
-first-party and never readable from script, and Strict keeps it off every
-cross-site request. Sign-in, sign-up, password reset and demo creation are rate
-limited per client, and five wrong passwords lock an account for five minutes.
+## Deploying
 
-| Endpoint | |
-|---|---|
-| `POST /api/auth/register` `login` `logout` | Email and password (6+ characters, as in the original) |
-| `GET /api/auth/me` | Who is signed in; a demo account says when it expires |
-| `POST /api/auth/demo` | A private demo account seeded from `shared/demo-items.json`, deleted after 24 hours |
-| `POST /api/auth/forgot-password` `reset-password` | Emailed reset link (Resend). Without an API key, development writes the link to the log |
+`.github/workflows/deploy.yml` lints, tests, builds and publishes to GitHub Pages at
+`https://nfb1799.github.io/resell-tracker-vue/` on every push to `main`. It needs the
+six `VITE_FIREBASE_*` values as repository secrets (the same values as the React
+repo) and Pages set to deploy from **GitHub Actions**. The site is on the same
+`nfb1799.github.io` host as the React app, which Firebase Auth already lists as an
+authorized domain.
 
-Everything else needs a signed-in user and only ever sees that user's data.
-Errors are [ProblemDetails](https://www.rfc-editor.org/rfc/rfc9457).
-
-| Endpoint | |
-|---|---|
-| `GET /api/items?status=&platform=&q=` | The user's items, newest first, with thumbnails and computed profit |
-| `POST /api/items` | Create (the client may supply the id) |
-| `GET PUT DELETE /api/items/{id}` | Read, replace, delete |
-| `PUT DELETE /api/items/{id}/sale` | Log or edit a sale; undo it |
-| `PUT DELETE /api/items/{id}/donation` | Log or edit a donation; undo it |
-| `PUT GET DELETE /api/items/{id}/photo` | Set (thumbnail + full JPEG, multipart), fetch the full image, remove |
-| `GET PUT /api/settings` | Display name, currency, theme, monthly goal |
-| `GET PUT /api/settings/fees` | Fee schedule per platform |
-| `GET /api/stats/dashboard` `/trends` | Overview tiles and trends, computed on the server |
-| `POST /api/items/import` | Bulk import: every row checked again, good rows added, bad ones reported |
-| `GET /api/export/csv` `/json` | CSV with the full profit breakdown; JSON backup that imports back in |
-
-Changes to an existing item carry its version in `If-Match`; every item response
-includes it, and it is also the `ETag`. A stale version gets **412**, a missing one
-**428**, and a change the item's status doesn't allow (selling a donated item) **409**.
-
-## Offline and installing
-
-The client is a PWA: installable from the browser, and usable with no connection.
-
-- **Opening offline.** The service worker precaches the app shell. The API is
-  deliberately kept out of it; instead the app saves the server's last answer
-  (items, settings, stats, who is signed in) in IndexedDB, per user, and opens
-  from that when the server can't be reached.
-- **Changes offline.** Each change joins an outbox in IndexedDB and shows at once,
-  worked out with the same TypeScript rules the forms use. When the server is
-  reachable again (the browser's online event, or a health check every 15
-  seconds while offline) the outbox is sent in order.
-- **Conflicts.** Every change carries the item version it was made against. If
-  the item changed elsewhere meanwhile, the server answers 412 and the change is
-  held under "needs your attention", showing each field it changed next to the
-  server's value: keep mine (only the fields I changed, on top of the latest) or
-  keep theirs. New items carry ids made on the device, so replaying a create the
-  server already has is harmless, and a change the server turns out to have
-  already is treated as done.
-
-Lighthouse dropped its PWA audit in version 12, so `npm run test:e2e` asks the
-browser directly (`Page.getInstallabilityErrors`) using the Chrome or Edge
-already installed; `BASE_URL=https://… npm run test:e2e` checks a deployed site.
-
-## Deployment
-
-One container: the API serving the built SPA from `wwwroot` (see the
-`Dockerfile`), on **Azure Container Apps**, with **Azure SQL Database** on the free
-offer. Both scale to zero when idle, so the first visit after a quiet spell takes
-a few seconds while the container starts and the database resumes; the API
-retries the database's "still waking up" errors rather than failing.
-
-- **CI/CD.** Every push builds the image. On `main` it is pushed to GitHub's
-  container registry, rolled out with `az containerapp update`, and the live site
-  is checked: it answers, and Chrome finds it installable and usable offline.
-  GitHub signs in to Azure with OIDC, so no Azure password is stored anywhere.
-- **Configuration**, set by `infra/azure-setup.sh` as Container Apps settings and
-  secrets: `ConnectionStrings__Default`, `Email__ResendApiKey`, `App__BaseUrl`
-  (where reset links point), `Database__MigrateOnStartup`, and
-  `Proxy__TrustForwardedHeaders` (client IPs for rate limiting, behind the proxy).
-- **Sessions survive restarts.** The keys that encrypt the sign-in cookie are kept
-  in the database rather than the container.
-- **Email.** Password-reset links go out through Resend. Without a verified domain
-  Resend only delivers to the account owner's address; adding a domain and setting
-  `Email__From` lifts that with no code change.
-
-To set it up from nothing: push to `main` once so CI publishes the image, make the
-package public on GitHub, run `infra/azure-setup.sh` in Azure Cloud Shell, and add
-the repository variables it prints. Every later push to `main` deploys itself.
-
-## Checks
-
-```bash
-cd client && npm run lint && npm test && npm run build && npm run test:e2e
-cd server && dotnet format --verify-no-changes && dotnet build && dotnet test
-```
-
-The server's integration tests run against a real SQL Server: each run creates a
-throwaway database through the migrations and drops it afterwards. Locally that is
-`.\SQLEXPRESS`; set `RESELLTRACKER_TEST_SQL` to a connection string without a
-database name to use another server.
-
-CI runs the same on every push and pull request, with SQL Server in a service
-container, and also fails if the EF model has changes no migration covers.
+`firestore.rules` is the same file as in the React repo. Both apps share one
+Firebase project, so deploying rules from either repo changes them for both.
